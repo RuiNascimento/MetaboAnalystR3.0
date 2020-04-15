@@ -4,7 +4,7 @@ author: "Jasmine Chong and Jianguo Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{XCMS to MetaboAnalystR}
+  %\VignetteIndexEntry{10. [Phased Out] - XCMS to MetaboAnalystR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

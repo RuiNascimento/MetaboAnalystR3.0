@@ -1,7 +1,7 @@
 # MetaboAnalystR 3.0: Towards Optimized Workflow for Global Metabolomics
 
 <p align="center">
-  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/log_v3.0.png">
+  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/docs/MetaboAnalystRlogo.png">
 </p>
 
 ## Description 
@@ -80,21 +80,12 @@ Due to issues with Latex, some users may find that they are only able to install
 install.packages("devtools")
 library(devtools)
 
-### For users with devtools > v2.0.0 ###
-
 # Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_vignettes = FALSE)
 
 # Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_vignettes = TRUE, build_manual =T)
 
-### For users with devtools < v2.0.0 ###
-
-# Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR3.0")
-
-# Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR3.0", build_vignettes=TRUE)
 ```
 
 #### Option B) Clone Github and install locally
@@ -104,7 +95,7 @@ The * must be replaced by what is actually downloaded and built.
 ```R
 git clone https://github.com/xia-lab/MetaboAnalystR3.0.git
 R CMD build MetaboAnalystR
-R CMD INSTALL MetaboAnalystR_*.tar.gz
+R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
 ```
 
@@ -122,7 +113,7 @@ R CMD INSTALL MetaboAnalystR_3.0.0.tar.gz
 
 ### MetaboAnalyst 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics
 
-The case studies have been preformed in our article of this version [here](). The example running R code of this article have been provided as a vignette inside the R package.
+The case studies have been preformed in our article of this version [here]() (Under review, not available for now). The example running R code of this article have been provided as a vignette inside the R package.
 
 
 ### MetaboAnalyst 2.0 Workflow: From Raw Spectra to Biological Insights

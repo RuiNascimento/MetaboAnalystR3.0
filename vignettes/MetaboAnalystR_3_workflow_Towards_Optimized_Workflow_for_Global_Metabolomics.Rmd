@@ -30,7 +30,6 @@ If you have finished the installation and been ready to use the package. Use the
 library("MetaboAnalystR")
 ```
 
-
 #### 2.1.2 Download IBD Example QC Data
 
 The example Quality Control (QC) samples will be used for the next steps. Download the MS data for parameters' optimization at this step. To reach a goal of quicking learning and avoid the long time running for the whole samples (over 600 samples). We only provide 5 samples for each CD and nonIBD group here. If you want to repeat and verify the results in our manuscript, please go [IBD MultiOmics Database](https://www.ibdmdb.org/), download the full batch data and run them using this pipeline.
@@ -41,11 +40,9 @@ data_folder_Sample <- "~/Data_IBD"
 data_folder_QC <- "~/QC_IBD"  
 ```
 
-
-
-
 ```{r, eval=FALSE,echo=T}
-# Use Google API for data downloading here. Please "install.packages('googledrive')" and "install.packages('httpuv')"first.
+# Use Google API for data downloading here. 
+# Please "install.packages('googledrive')" and "install.packages('httpuv')"first.
 library(googledrive);
 temp <- Ttempfile(fileext = ".zip")
 # Please authorize your google account to access the data
@@ -57,7 +54,6 @@ out <- unzip(temp, exdir = data_folder_QC)
 out
 
 ```
-
 
 ```{r eval=FALSE,echo=T}
 # Now, download the small example data for comparison between CD vs. nonIBD
@@ -87,7 +83,7 @@ cat("0020a_XAV_iHMP2_FFA_PREFA02.mzXML",
 ```
 
 ```{r echo=F, fig.width = 60}
-knitr::include_graphics("datainspect.png")
+knitr::include_graphics("vignette_figures/datainspect.png")
 ```
 
 
@@ -116,12 +112,12 @@ Time Spent In Total:2.8mins
 ```
 
 ```{r echo=FALSE, fig.width=60}
-knitr::include_graphics("TIC_trimmed.png")
+knitr::include_graphics("vignette_figures/Tic_trimmed_IBD.png")
 ```
 
 #### 2.1.5 Initalize Parameters' Setting
 
-Instrument specific initial parameters have been embedded. Currently, the most popular platforms that include UPLC-Q/E, UPLC-Q/TOF, UPLC-T/TOF, UPLC-Ion_trap, UPLC-Orbitrap, UPLC-G2S, HPLC-Q/TOF, HPLC-Ion_Trap, HPLC-Orbitrap and HPLC-S/Q. If your platform is not listed here, the "general" option can be applied for this setting. Besides, the specific parameters could also be set individually, if you have your own opinion about the parameters. This parameters optimization steps can be skipped.
+Instrument specific initial parameters have been embedded. Currently, the most popular platforms that include UPLC-Q/E, UPLC-Q/TOF, UPLC-T/TOF, UPLC-Ion_trap, UPLC-Orbitrap, UPLC-G2S, HPLC-Q/TOF, HPLC-Ion_Trap, HPLC-Orbitrap and HPLC-S/Q. If your platform is not listed here, the "general" option can be applied for this setting. Both "centWave" and "matchedFIlter" modes have been configured for further processing. Besides, the specific parameters could also be set individually, if you have your own opinion about the parameters. This parameters optimization step can be skipped.
 
 ```{r, echo=TRUE,eval=F}
 # Initial platform specific parameters
@@ -131,7 +127,7 @@ param_initial <- SetPeakParam(platform = "UPLC-Q/E")
 
 #### 2.1.6 Parameters' Optimization
 
-Parameters optimization with "ssm" strategy. Initial parameters are from the internal embeded parameters set.
+Parameters optimization with "DoE" strategy. Initial parameters are from the optimized parameters above or the internal default parameters from embedded *SetPeakParam* function.
 
 ```{r, echo=T, eval=FALSE}
 # Select relative core according to your work platform
@@ -192,7 +188,6 @@ Time Spent In Total:25.1mins
 ')
 ```
 
-
 #### 2.1.7 Peak Profiling
 
 The *ImportRawMSData* function reads in raw MS data files and saves it as an OnDiskMSnExp object. Two plots can be output with *plotSetting* function set with "Plot = T" - the Total Ion Chromatogram (TIC) which provides an overview of the entire spectra, and the Base Peak Chromatogram (BPC) which is a cleaner profile of the spectra based on the most abundant signals. These plots are useful to inform the setting of parameters downstream. For users who wish to view a peak of interest, an Extracted Ion Chromatogram (EIC) can be generated using the *PlotEIC* function.
@@ -247,14 +242,11 @@ Requesting 8946 peaks from 0508_XAV_iHMP2_FFA_SM-9X47O.mzXML ... got 4749.
 [1] "Peak picking finished successfully !"')
 ```
 
+Intensity statistics of all samples.
 
 ```{r echo=FALSE, fig.width=20}
-knitr::include_graphics("Peak_Intensity.png")
-knitr::include_graphics("Adjusted_BPI.png")
-knitr::include_graphics("Adjusted_RT.png")
-knitr::include_graphics("PCA.png")
+knitr::include_graphics("vignette_figures/Peak_Intensity.png")
 ```
-
 
 #### 2.1.8 Peak Annotation
 
@@ -300,12 +292,20 @@ Successfully performed peak annotation!')
 
 ```
 
-
 ```{r,echo=T, eval=FALSE}
 # # Format and filter the peak list for MetaboAnalystR
 maPeaks <- FormatPeakList(annotPeaks, annParams, filtIso =F, filtAdducts = FALSE,
                           missPercent = 1)
 ```
+
+Part of the table (first 20 rows) are shown below.
+
+```{r,echo=F}
+require(knitr);require(kableExtra)
+d<-kable(head(read.csv("vignette_figures/metaboanalyst_input.csv",header = T),20))
+scroll_box(d,width = "700px", height = "500px")
+```
+
 
 ### 2.2 Data Processing and Statistical Analysis
 Remaining in the same working directory, we will read in the filtered peak table. Then, we will replace missing values with a small value (half of the minimum positive value within the original data). Next we will filter varibles out non-informative signals, then normalize the samples to their median and perform log transformation. Finally, we will perform t-test analysis to identify differentially enriched features, setting the FDR-adjusted p-value threshold to 0.25.
@@ -313,7 +313,8 @@ Remaining in the same working directory, we will read in the filtered peak table
 #### 2.2.1 mSet initialized for further analysis
 
 ```{r,eval=F}
-# Initialize the mSetObj
+# First step is to create the mSet Object, specifying that the data to be uploaded
+# is a peak table ("pktable") and that statistical analysis will be performed ("stat").
 mSet<-InitDataObjects("pktable", "stat", FALSE)
 
 ```
@@ -347,28 +348,29 @@ Rserv started in daemon mode.
 ```
 
 ```{r,eval=F}
-# Read in the filtered peak list
-mSet<-Read.TextData(mSet, "metaboanalyst_input.csv", "colu", "disc")
+# Second step is to read in the filtered peak list, please set the path right first
+mSet<-Read.TextData(mSet, "~/Documents/metaboanalyst_input.csv", "colu", "disc")
 
 ```
 
 #### 2.2.2 Perform Data Statistics
 
 ```{r,eval=F}
+# The third step is to perform data processing using MetaboAnalystR (filtering/normalization)
 # Perform data processing - Data checking
 mSet<-SanityCheckData(mSet)
 ```
 
 ```{r,echo=F}
-cat('[1] "Successfully passed sanity check!"                                                                    
- [2] "Samples are not paired."                                                                              
- [3] "2 groups were detected in samples."                                                                   
+cat('[1] "Successfully passed sanity check!"                                             
+ [2] "Samples are not paired."                                                           
+ [3] "2 groups were detected in samples."                                                
  [4] "Only English letters, numbers, underscore, hyphen and forward slash (/) are allowed."                 
  [5] "<font color=\"orange\">Other special characters or punctuations (if any) will be stripped off.</font>"
- [6] "All data values are numeric."                                                                         
- [7] "A total of 30390 (23.6%) missing values were detected."                                               
- [8] "<u>By default, these values will be replaced by a small value.</u>"                                   
- [9] "Click <b>Skip</b> button if you accept the default practice"                                          
+ [6] "All data values are numeric."                                                      
+ [7] "A total of 30390 (23.6%) missing values were detected."                            
+ [8] "<u>By default, these values will be replaced by a small value.</u>"                
+ [9] "Click <b>Skip</b> button if you accept the default practice"                       
 [10] "Or click <b>Missing value imputation</b> to use other methods"')
 ```
 
@@ -390,15 +392,96 @@ cat('[1] " Further feature filtering based on Interquantile Range Reduced to 500
 ```
 
 
+```{r,eval=F}
+mSet <- PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
+mSet <- PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
+```
+
+```{r echo=FALSE, fig.width=60}
+knitr::include_graphics("vignette_figures/norm_0_dpi72.png",dpi = 120)
+```
+
+
+```{r,eval=F}
+# The fourth step is to perform fold-change analysis
+mSet <- FC.Anal.unpaired(mSet, 2.0, 0)
+mSet <- PlotFC(mSet, "fc_0_", "png", 72, width=NA)
+```
+
+```{r echo=FALSE, fig.width=60}
+knitr::include_graphics("vignette_figures/fc_0_dpi72.png",dpi = 120)
+```
+
+```{r,eval=F}
+# The fifth step is to perform t-test analysis
+mSet <- Ttests.Anal(mSet, F, 0.05, FALSE, TRUE)
+mSet <- PlotTT(mSet, "tt_0_", "png", 72, width=NA)
+```
+
+```{r echo=FALSE, fig.width=60}
+knitr::include_graphics("vignette_figures/tt_0_dpi72.png",dpi = 120)
+```
+
+```{r,echo=F}
+cat('[1] "A total of 218 significant features were found."')
+```
+
+
+```{r,eval=F}
+# The sixth step is to perform PCA
+mSet <- PCA.Anal(mSet)
+mSet <- PlotPCAPairSummary(mSet, "pca_pair_0_", "png", 72, width=NA, 5)
+mSet <- PlotPCAScree(mSet, "pca_scree_0_", "png", 72, width=NA, 5)
+mSet <- PlotPCA2DScore(mSet, "pca_score2d_0_", "png", 72, width=NA, 1,2,0.95,1,0)
+mSet <- PlotPCALoading(mSet, "pca_loading_0_", "png", 72, width=NA, 1,2);
+mSet <- PlotPCABiplot(mSet, "pca_biplot_0_", "png", 72, width=NA, 1,2)
+mSet <- PlotPCA3DScoreImg(mSet, "pca_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
+```
+
+```{r echo=FALSE, fig.width=60}
+knitr::include_graphics("vignette_figures/pca_score2d_0_dpi72.png",dpi = 120)
+```
+
+```{r echo=FALSE, fig.width=60}
+knitr::include_graphics("vignette_figures/pca_score3d_0_dpi72.png",dpi = 120)
+```
+
+```{r,echo=F}
+cat('[1] "The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d."')
+```
+
+
+
+```{r,eval=F}
+# The seventh step is to perform PLS-DA
+mSet <- PLSR.Anal(mSet, reg=TRUE)
+mSet <- PlotPLSPairSummary(mSet, "pls_pair_0_", "png", 72, width=NA, 5)
+mSet <- PlotPLS2DScore(mSet, "pls_score2d_0_", "png", 72, width=NA, 1,2,0.95,1,0)
+mSet <- PlotPLS3DScoreImg(mSet, "pls_score3d_0_", "png", 72, width=NA, 1,2,3, 40)
+mSet <- PlotPLSLoading(mSet, "pls_loading_0_", "png", 72, width=NA, 1, 2);
+mSet <- PLSDA.CV(mSet, "L",5, "Q2")
+mSet <- PlotPLS.Classification(mSet, "pls_cv_0_", "png", 72, width=NA)
+mSet <- PlotPLS.Imp(mSet, "pls_imp_0_", "png", 72, width=NA, "vip", "Comp. 1", 15,FALSE)
+
+```
+
+```{r echo=FALSE, fig.width=20}
+knitr::include_graphics("vignette_figures/pls_score2d_0_dpi72.png",dpi = 120)
+```
+
+
+
+
+Perform T test for further MS peaks to pathway analysis
 ```{r, eval=FALSE}
 # Perform t-test
 mSet<-Ttests.Anal(mSet, F, 0.25, FALSE, TRUE)
 
 ```
+
 ```{r,echo=F}
 cat('[1] "A total of 1329 significant features were found."')
 ```
-
 
 
 
@@ -463,7 +546,7 @@ The following object is masked from package:base:
 ```
 
 ```{r echo=FALSE, fig.width=80}
-knitr::include_graphics("peaks_to_paths_1_v1_optimied_new_dpi144.png")
+knitr::include_graphics("vignette_figures/peaks_to_paths_1_v1_optimied_new_dpi144.png")
 ```
 
 
@@ -516,7 +599,7 @@ cat("0020a_XAV_iHMP2_FFA_PREFA02.mzXML","\n",'[1] "RT range is: 18.0985 and 1139
 ```
 
 ```{r echo=F, fig.width = 60}
-knitr::include_graphics("datainspect.png")
+knitr::include_graphics("vignette_figures/datainspect.png")
 ```
 
 
@@ -559,7 +642,7 @@ Time Spent In Total:7.8mins')
 ```
 
 ```{r echo=FALSE, fig.width=60}
-knitr::include_graphics("trimmed_TIC_2.png")
+knitr::include_graphics("vignette_figures/trimmed_TIC_2.png")
 ```
 
 #### 3.5 Initalize Parameters' Setting
