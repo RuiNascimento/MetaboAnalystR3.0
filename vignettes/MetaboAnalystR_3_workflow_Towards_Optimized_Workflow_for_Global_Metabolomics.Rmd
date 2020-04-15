@@ -1,10 +1,10 @@
 ---
-title: 'MetaboAnalystR 3 workflow: Towards Optimized Workflow for Global Metabolomics'
+title: "MetaboAnalystR 3 workflow: Towards Optimized Workflow for Global Metabolomics"
 author: "Zhiqiang Pang, Jasmine Chong and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{MetaboAnalystR 3 workflow: Towards Optimized Workflow for Global Metabolomics}
+  %\VignetteIndexEntry{MetaboAnalystR 3 workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
