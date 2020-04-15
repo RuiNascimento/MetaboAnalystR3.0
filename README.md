@@ -83,18 +83,18 @@ library(devtools)
 ### For users with devtools > v2.0.0 ###
 
 # Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
 
 # Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"))
 
 ### For users with devtools < v2.0.0 ###
 
 # Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR")
+devtools::install_github("xia-lab/MetaboAnalystR3.0")
 
 # Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
+devtools::install_github("xia-lab/MetaboAnalystR3.0", build_vignettes=TRUE)
 ```
 
 #### Option B) Clone Github and install locally
@@ -102,7 +102,7 @@ devtools::install_github("xia-lab/MetaboAnalystR", build_vignettes=TRUE)
 The * must be replaced by what is actually downloaded and built.  
 
 ```R
-git clone https://github.com/xia-lab/MetaboAnalystR.git
+git clone https://github.com/xia-lab/MetaboAnalystR3.0.git
 R CMD build MetaboAnalystR
 R CMD INSTALL MetaboAnalystR_*.tar.gz
 
