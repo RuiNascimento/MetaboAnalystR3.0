@@ -4,7 +4,7 @@ author: "Jasmine Chong, Zhiqiang Pang and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Enrichment Analysis}
+  %\VignetteIndexEntry{4. Enrichment Analysis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

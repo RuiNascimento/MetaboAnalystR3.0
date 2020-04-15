@@ -4,7 +4,7 @@ author: "Jasmine Chong, Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{MS Peaks to Pathways}
+  %\VignetteIndexEntry{3.2 MS Peaks to Pathways}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

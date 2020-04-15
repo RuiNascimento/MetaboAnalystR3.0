@@ -4,7 +4,7 @@ author: "Jasmine Chong, Zhiqiang Pang and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction To The MetaboAnalystR Package}
+  %\VignetteIndexEntry{0. Introduction To The MetaboAnalystR Package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
