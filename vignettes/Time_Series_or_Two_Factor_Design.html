@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Jasmine Chong, Jeff Xia" />
+
+<meta name="date" content="2020-04-15" />
+
+<title>Time Series or Two Factor Design</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(data-line-number);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Time Series or Two Factor Design</h1>
+<h4 class="author">Jasmine Chong, Jeff Xia</h4>
+<h4 class="date">2020-04-15</h4>
+
+
+
+<div id="introduction" class="section level2">
+<h2>1. Introduction</h2>
+<p>The time-series/two-factor design module supports temporal and two-factor data analysis including data overview, two-way ANOVA, and empirical Bayes time-series analysis for detecting distinctive temporal profiles. It also supports ANOVA-simultaneous component analysis (ASCA) to identify major patterns associated with each experimental factor.</p>
+<p>For a comprehensive introductory tutorial and further details concerning time-series analysis, please refer to Xia et al. 2013 (PMID: 23543913).</p>
+</div>
+<div id="time-seriestwo-factor-design-example-workflow" class="section level2">
+<h2>2 Time-Series/Two-Factor Design Example Workflow</h2>
+<p>The time-series/two-factor design (TT) module accepts either a compound concentration table, spectral binned data, or a peak intensity table. The format of the data must be specified, identifying whether the samples are in rows or columns, and whether or not the data is paired. The data may either be .csv or .txt files. The pilot data follows the uploading, processing, filtering, and normalization steps as per other modules. Please refer to the “Introduction to MetaboAnalystR” vignette for details. For this example, we will use LC-MS peak list intensity data collected from <em>Arabidopsis thaliana</em> during a wounding time course (four time points). WT - wild type; MT - dde2-2 mutant. Please refer to Meinicke P. et al 2008 (PMID: 18582365) for more information.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(MetaboAnalystR)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">mSet&lt;-<span class="kw">InitDataObjects</span>(<span class="st">&quot;pktable&quot;</span>, <span class="st">&quot;ts&quot;</span>, <span class="ot">FALSE</span>);</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">mSet&lt;-<span class="kw">SetDesignType</span>(mSet, <span class="st">&quot;time&quot;</span>);</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">mSet&lt;-<span class="kw">Read.TextData</span>(mSet, <span class="st">&quot;https://www.metaboanalyst.ca/MetaboAnalyst/resources/data/cress_time.csv&quot;</span>, <span class="st">&quot;colts&quot;</span>, <span class="st">&quot;disc&quot;</span>);</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">mSet&lt;-<span class="kw">SanityCheckData</span>(mSet);</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">mSet&lt;-<span class="kw">ReplaceMin</span>(mSet);</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">mSet&lt;-<span class="kw">PreparePrenormData</span>(mSet);</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">mSet&lt;-<span class="kw">Normalization</span>(mSet, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;NULL&quot;</span>, <span class="st">&quot;S10T0&quot;</span>, <span class="dt">ratio=</span><span class="ot">FALSE</span>, <span class="dt">ratioNum=</span><span class="dv">20</span>);</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">mSet&lt;-<span class="kw">PlotNormSummary</span>(mSet, <span class="st">&quot;norm_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>);</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">mSet&lt;-<span class="kw">PlotSampleNormSummary</span>(mSet, <span class="st">&quot;snorm_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>);</a></code></pre></div>
+<div id="time-series-analysis" class="section level3">
+<h3>2.1 Time-Series Analysis</h3>
+<p><strong>Data Overview:</strong> The TT module consists of two visualization options for data overview. The first is the Interactive PCA Visualization (iPCA). This approach summarizes data in an interactive 3D graph which supports pointing, clicking, rotating, and zooming in and out to view data details. It is incredibly useful to detect overall patterns within the data. To achieve this, use the <em>iPCA.Anal</em> function to create the PCA plot, which will output a .json file of the plot in your working directory. In addition to the JSON file, interactive 3D score and loading plots made with the plotly R package are also available. To view these plots, type “mSetObj$imgSet$time$score3d” to view the interactive scores plot, and “mSetObj$imgSet$time$load3d” to view the interactive loadings plot. The second option is to create a heatmap of the data. This method displays data in the form of colored cells and provides direct visualization of the relative levels of individual samples or variables. To use this function, use <em>PlotHeatMap2</em>, which will create heatmap according to user’s specifications in your working directory.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co"># Create an Interactive PCA Plot</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">mSet&lt;-<span class="kw">iPCA.Anal</span>(mSet, <span class="st">&quot;ipca_3d_0_.json&quot;</span>)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="co"># Create a Heatmap</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">mSet&lt;-<span class="kw">PlotHeatMap2</span>(mSet, <span class="st">&quot;heatmap2_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;euclidean&quot;</span>,<span class="st">&quot;ward.D&quot;</span>,<span class="st">&quot;bwm&quot;</span>,<span class="st">&quot;overview&quot;</span>, F, <span class="dv">1</span>, F, F)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co"># View the interactive scores plot</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">mSet<span class="op">$</span>imgSet<span class="op">$</span>time<span class="op">$</span>score3d </a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="co"># View the interactive loadings plot</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">mSet<span class="op">$</span>imgSet<span class="op">$</span>time<span class="op">$</span>load3d</a></code></pre></div>
+<p><strong>Univariate Analysis:</strong> The TT module supports two-way ANOVA (ANOVA2), which provides classical univariate two-way ANOVA analysis based on two given factors. For two-factor independent samples, two-way ANOVA between subjects will be performed.</p>
+<p>For time-series + one experimental factor, two-way repeated measures ANOVA within subjects will be performed. Finally, for time-series data, one-way repeated measures ANOVA within-subjects will be performed. To perform ANOVA2, use the function <em>ANOVA2.Anal</em>. and specify the adjusted p-value cutoff (thresh), the multiple testing correction (p.cor), and type of data (type).</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="co"># Perform ANOVA2 Analysis</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">mSet&lt;-<span class="kw">ANOVA2.Anal</span>(mSet, <span class="dt">thresh=</span><span class="fl">0.05</span>, <span class="dt">p.cor=</span><span class="st">&quot;fdr&quot;</span>, <span class="dt">type=</span><span class="st">&quot;time&quot;</span>)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="co"># Plot ANOVA2</span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">mSet&lt;-<span class="kw">PlotANOVA2</span>(mSet, <span class="st">&quot;aov2_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</a></code></pre></div>
+<p><strong>Multivariate Analysis:</strong> The TT module supports 2 methods for multivariate analysis, 1) ANOVA Simultaneous Component Analysis (ASCA) and Multivariate Empirical Bayes Analysis of Variance (MB-ANOVA) for time-series analysis. We first begin with ASCA, which is designed to identify major patterns with regard to two given factors and their interaction. The implementation of ASCA in MetaboAnalyst was based on the algorithm described by AK Smildle, et al. 2005 (PMID: 15890747) with additional improvements for feature selection and model validation. To begin, use <em>Perform.ASCA</em> which requires user input of the number of components for each model (a, b, x) and model residuals (res).</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co"># Perform ASCA, specifying model components</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">mSet&lt;-<span class="kw">Perform.ASCA</span>(mSet, <span class="dt">a=</span><span class="dv">1</span>, <span class="dt">b=</span><span class="dv">1</span>, <span class="dt">x=</span><span class="dv">2</span>, <span class="dt">res=</span><span class="dv">2</span>)</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="co"># Create scree plots of each model</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">mSet&lt;-<span class="kw">PlotModelScree</span>(mSet, <span class="st">&quot;asca_scree_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="co"># Plot ASCA model A</span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">mSet&lt;-<span class="kw">PlotASCAModel</span>(mSet, <span class="st">&quot;asca_fa_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;a&quot;</span>,<span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10"><span class="co"># Plot ASCA model B</span></a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">mSet&lt;-<span class="kw">PlotASCAModel</span>(mSet, <span class="st">&quot;asca_fb_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;b&quot;</span>,<span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb5-13" data-line-number="13"><span class="co"># Plot ASCA Interaction</span></a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">mSet&lt;-<span class="kw">PlotInteraction</span>(mSet, <span class="st">&quot;asca_fab_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>,<span class="ot">FALSE</span>, <span class="dt">width=</span><span class="ot">NA</span>)</a>
+<a class="sourceLine" id="cb5-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb5-16" data-line-number="16"><span class="co"># Perform model validation, 20 permutations specified</span></a>
+<a class="sourceLine" id="cb5-17" data-line-number="17">mSet&lt;-<span class="kw">Perform.ASCA.permute</span>(mSet, <span class="dv">20</span>)</a>
+<a class="sourceLine" id="cb5-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb5-19" data-line-number="19"><span class="co"># Plot model validation</span></a>
+<a class="sourceLine" id="cb5-20" data-line-number="20">mSet&lt;-<span class="kw">PlotASCA.Permutation</span>(mSet, <span class="st">&quot;asca_perm_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</a>
+<a class="sourceLine" id="cb5-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb5-22" data-line-number="22"><span class="co"># Calculate significant features, specifying the alpha threshold (spe.thresh) and leverage threshold (lev.thresh) </span></a>
+<a class="sourceLine" id="cb5-23" data-line-number="23">mSet&lt;-<span class="kw">CalculateImpVarCutoff</span>(mSet, <span class="dt">spe.thresh =</span> <span class="fl">0.05</span>, <span class="dt">lev.thresh =</span> <span class="fl">0.9</span>)</a>
+<a class="sourceLine" id="cb5-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb5-25" data-line-number="25"><span class="co"># Plots of significant features for each model</span></a>
+<a class="sourceLine" id="cb5-26" data-line-number="26">mSet&lt;-<span class="kw">PlotAscaImpVar</span>(mSet, <span class="st">&quot;asca_impa_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;a&quot;</span>)</a>
+<a class="sourceLine" id="cb5-27" data-line-number="27">mSet&lt;-<span class="kw">PlotAscaImpVar</span>(mSet, <span class="st">&quot;asca_impb_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;b&quot;</span>)</a>
+<a class="sourceLine" id="cb5-28" data-line-number="28">mSet&lt;-<span class="kw">PlotAscaImpVar</span>(mSet, <span class="st">&quot;asca_impab_0_&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>, <span class="st">&quot;ab&quot;</span>)</a></code></pre></div>
+<p>The second method for multivariate analysis is MB-ANOVA, which is designed to compare temporal profiles across different biological conditions. It is based on the time-course method described by YC Tai. et al. 2006 (A multivariate empirical Bayes statistic for replicated microarray time course data). Use <em>performMB</em> to begin, specifying the cut-off (topPerc). The generated table shows all the features ranked by the corresponding statistics. Users can select any feature name to view its corresponding time-course profile. For time-course only data, we are interested in fetures which change over time, and for time-course + one experimental factor data, we are interested in features which respond differently in different experimental conditions over time.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="co"># Perform MB</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">mSet&lt;-<span class="kw">performMB</span>(mSet, <span class="dt">topPerc =</span> <span class="dv">10</span>)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="co"># Plot time-course profile of selected feature</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">mSet&lt;-<span class="kw">PlotMBTimeProfile</span>(mSet, <span class="st">&quot;3.1522/851&quot;</span>, <span class="st">&quot;png&quot;</span>, <span class="dv">72</span>, <span class="dt">width=</span><span class="ot">NA</span>)</a></code></pre></div>
+</div>
+</div>
+<div id="sweave-report" class="section level2">
+<h2>3. Sweave Report</h2>
+<p>Following analysis, a comprehensive report can be generated which contains a detailed description of each step performed in the R package, embedded with graphical and tabular outputs. To prepare the sweave report, please use the <em>PreparePDFReport</em> function. You must ensure that you have the nexessary Latex libraries to generate the report (i.e. pdflatex, LaTexiT). The object created <em>must</em> be named <em>mSet</em>, and specify the user name in quotation marks.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">PreparePDFReport</span>(mSet, <span class="st">&quot;My Name&quot;</span>)</a></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2439 @@
+#'Perform PCA analysis
+#'@description Perform PCA analysis, obtain variance explained, store item to PCA object
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'@param mSetObj Input name of the created mSet Object
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PCA.Anal <- function(mSetObj=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
+  
+  # obtain variance explained
+  sum.pca <- summary(pca);
+  imp.pca <- sum.pca$importance;
+  std.pca <- imp.pca[1,]; # standard devietation
+  var.pca <- imp.pca[2,]; # variance explained by each PC
+  cum.pca <- imp.pca[3,]; # cummulated variance explained
+  
+  # store the item to the pca object
+  mSetObj$analSet$pca<-append(pca, list(std=std.pca, variance=var.pca, cum.var=cum.pca));
+  write.csv(signif(mSetObj$analSet$pca$x,5), file="pca_score.csv");
+  write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
+  mSetObj$analSet$pca$loading.type <- "all";
+  mSetObj$custom.cmpds <- c();
+  return(.set.mSet(mSetObj));
+}
+
+#'Rotate PCA analysis
+#'@description Rotate PCA analysis
+#'@param mSetObj Input name of the created mSet Object
+#'@param axisOpt Input the axis option 
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+PCA.Flip <- function(mSetObj=NA, axisOpt){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  pca<-mSetObj$analSet$pca;
+  # store the item to the pca object
+  if(axisOpt == "x"){
+    pca$x[,1] <- -pca$x[,1];
+    pca$rotation[,1] <- -pca$rotation[,1];
+  }else if(axisOpt == "y"){
+    pca$x[,2] <- -pca$x[,2];
+    pca$rotation[,2] <- -pca$rotation[,2];
+  }else{ # all
+    pca$x <- -pca$x;
+    pca$rotation <- -pca$rotation;
+  }
+  write.csv(signif(pca$x,5), file="pca_score.csv");
+  write.csv(signif(pca$rotation,5), file="pca_loadings.csv");
+  
+  mSetObj$analSet$pca <- pca;
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PCA pair summary, format image in png, tiff, pdf, ps, svg
+#'@description Rotate PCA analysis
+#'@usage PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num)
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pc.num Numeric, input a number to indicate the number of principal components to display in the pairwise score plot.
+#'@export
+#'
+PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  pclabels <- paste("PC", 1:pc.num, "\n", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%");
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 10;
+  }else if(width == 0){
+    w <- 8;
+  }else{
+    w <- width;
+  }
+  
+  mSetObj$imgSet$pca.pair <- imgName;
+  
+  h <- w;
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  if(mSetObj$dataSet$cls.type == "disc"){
+    pairs(mSetObj$analSet$pca$x[,1:pc.num], col=GetColorSchema(mSetObj), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels);
+  }else{
+    pairs(mSetObj$analSet$pca$x[,1:pc.num], labels=pclabels);
+  }
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PCA scree plot
+#'@description Rotate PCA analysis
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param scree.num Numeric, input a number to indicate the number of principal components to display in the scree plot.
+#'@usage PlotPCAScree(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num)
+#'@export
+#'
+PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  stds <-mSetObj$analSet$pca$std[1:scree.num];
+  pcvars<-mSetObj$analSet$pca$variance[1:scree.num];
+  cumvars<-mSetObj$analSet$pca$cum.var[1:scree.num];
+  
+  ylims <- range(c(pcvars,cumvars));
+  extd<-(ylims[2]-ylims[1])/10
+  miny<- ifelse(ylims[1]-extd>0, ylims[1]-extd, 0);
+  maxy<- ifelse(ylims[2]+extd>1, 1.0, ylims[2]+extd);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 10;
+  }else if(width == 0){
+    w <- 8;
+  }else{
+    w <- width;
+  }
+  h <- w*2/3;
+  
+  mSetObj$imgSet$pca.scree <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,6,3));
+  plot(pcvars, type='l', col='blue', main='Scree plot', xlab='PC index', ylab='Variance explained', ylim=c(miny, maxy), axes=F)
+  text(pcvars, labels =paste(100*round(pcvars,3),'%'), adj=c(-0.3, -0.5), srt=45, xpd=T)
+  points(pcvars, col='red');
+  
+  lines(cumvars, type='l', col='green')
+  text(cumvars, labels =paste(100*round(cumvars,3),'%'), adj=c(-0.3, -0.5), srt=45, xpd=T)
+  points(cumvars, col='red');
+  
+  abline(v=1:scree.num, lty=3);
+  axis(2);
+  axis(1, 1:length(pcvars), 1:length(pcvars));
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Create 2D PCA score plot
+#'@description Rotate PCA analysis
+#'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pcx Specify the principal component on the x-axis
+#'@param pcy Specify the principal component on the y-axis
+#'@param reg Numeric, input a number between 0 and 1, 0.95 will display the 95 percent confidence regions, and 0 will not.
+#'@param show Display sample names, 1 = show names, 0 = do not show names.
+#'@param grey.scale Use grey-scale colors, 1 = grey-scale, 0 = not grey-scale.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  xlabel = paste("PC",pcx, "(", round(100*mSetObj$analSet$pca$variance[pcx],1), "%)");
+  ylabel = paste("PC",pcy, "(", round(100*mSetObj$analSet$pca$variance[pcy],1), "%)");
+  pc1 = mSetObj$analSet$pca$x[, pcx];
+  pc2 = mSetObj$analSet$pca$x[, pcy];
+  text.lbls<-substr(names(pc1),1,14) # some names may be too long
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pca.score2d <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  op<-par(mar=c(5,5,3,3));
+  
+  if(mSetObj$dataSet$cls.type == "disc"){
+    # obtain ellipse points to the scatter plot for each category
+    
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+    }else{
+      cls <- mSetObj$dataSet$cls;
+    }
+    
+    lvs <- levels(cls);
+    pts.array <- array(0, dim=c(100,2,length(lvs)));
+    for(i in 1:length(lvs)){
+      inx <-mSetObj$dataSet$cls == lvs[i];
+      groupVar<-var(cbind(pc1[inx],pc2[inx]), na.rm=T);
+      groupMean<-cbind(mean(pc1[inx], na.rm=T),mean(pc2[inx], na.rm=T));
+      pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+    }
+    
+    xrg <- range(pc1, pts.array[,1,]);
+    yrg <- range(pc2, pts.array[,2,]);
+    x.ext<-(xrg[2]-xrg[1])/12;
+    y.ext<-(yrg[2]-yrg[1])/12;
+    xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
+    ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
+    
+    cols <- GetColorSchema(mSetObj, grey.scale==1);
+    uniq.cols <- unique(cols);
+    
+    plot(pc1, pc2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot",
+         col=cols, pch=as.numeric(mSetObj$dataSet$cls)+1); ## added
+    grid(col = "lightgray", lty = "dotted", lwd = 1);
+    
+    # make sure name and number of the same order DO NOT USE levels, which may be different
+    legend.nm <- unique(as.character(sort(cls)));
+    ## uniq.cols <- unique(cols);
+    
+    ## BHAN: when same color is choosen; it makes an error
+    if ( length(uniq.cols) > 1 ) {
+      names(uniq.cols) <- legend.nm;
+    }
+    
+    # draw ellipse
+    for(i in 1:length(lvs)){
+      if (length(uniq.cols) > 1) {
+        polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
+      } else {
+        polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
+      }
+      if(grey.scale) {
+        lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
+      }
+    }
+    
+    pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+    if(grey.scale) {
+      cols <- rep("black", length(cols));
+    }
+    if(show == 1){
+      text(pc1, pc2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+      points(pc1, pc2, pch=pchs, col=cols);
+    }else{
+      if(length(uniq.cols) == 1){
+        points(pc1, pc2, pch=pchs, col=cols, cex=1.0);
+      }else{
+        if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+          points(pc1, pc2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+        }else{
+          points(pc1, pc2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+        }
+      }
+    }
+    uniq.pchs <- unique(pchs);
+    if(grey.scale) {
+      uniq.cols <- "black";
+    }
+
+    if(length(lvs) < 6){
+        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+    }else if (length(lvs) < 10){
+        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
+    }else{
+        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
+    }
+    
+  }else{
+    plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
+    points(pc1, pc2, pch=15, col="magenta");
+    text(pc1, pc2, label=text.lbls, pos=4, col ="blue", xpd=T, cex=0.8);
+  }
+  par(op);
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Create 3D PCA score plot
+#'@description Rotate PCA analysis
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@usage PlotPCA3DScore(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@export
+#'
+PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  pca <-  mSetObj$analSet$pca;
+  pca3d <- list();
+  pca3d$score$axis <- paste("PC", c(inx1, inx2, inx3), " (", 100*round( mSetObj$analSet$pca$variance[c(inx1, inx2, inx3)], 3), "%)", sep="");
+  coords <- data.frame(t(signif(pca$x[,c(inx1, inx2, inx3)], 5)));
+  colnames(coords) <- NULL;
+  pca3d$score$xyz <- coords;
+  pca3d$score$name <- rownames(mSetObj$dataSet$norm);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  
+  pca3d$score$facA <- cls;
+  
+  # now set color for each group
+  cols <- unique(GetColorSchema(mSetObj));
+  rgbcols <- col2rgb(cols);
+  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
+  pca3d$score$colors <- cols;
+  imgName = paste(imgName, ".", format, sep="");
+  json.obj <- RJSONIO::toJSON(pca3d, .na='null');
+  sink(imgName);
+  cat(json.obj);
+  sink();
+  
+  if(!.on.public.web){
+    return(.set.mSet(mSetObj));
+  }
+}
+
+#'@export
+PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  pca = mSetObj$analSet$pca
+  coords<-signif(as.matrix(cbind(pca$rotation[,inx1],pca$rotation[,inx2],pca$rotation[,inx3])),5);
+  pca3d <- list();
+  
+  pca3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
+  coords <- data.frame(t(signif(pca$rotation[,1:3], 5)));
+  
+  colnames(coords) <- NULL; 
+  pca3d$loading$xyz <- coords;
+  pca3d$loading$name <- rownames(pca$rotation);
+  pca3d$loading$entrez <-rownames(pca$rotation); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  
+  pca3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- toJSON(pca3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+  
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
+
+}
+
+#'Update PCA loadings
+#'@description Update the PCA loadings
+#'@param mSetObj Input name of the created mSet Object
+#'@param plotType Set annotation type, "all" to label all variables and
+#'"none" to label no variables.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+UpdatePCA.Loading<- function(mSetObj=NA, plotType){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$pca$loading.type <- plotType;
+  mSetObj$custom.cmpds <- c();
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PCA loadings and also set up the matrix for display
+#'@description Rotate PCA analysis
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, plotType, lbl.feat=1)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@export
+#'
+PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  loadings<-signif(as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2])),5);
+  ldName1<-paste("Loadings", inx1);
+  ldName2<-paste("Loadings", inx2);
+  colnames(loadings)<-c(ldName1, ldName2);
+  load.x.uniq <- jitter(loadings[,1]);
+  names(load.x.uniq) <- rownames(loadings);
+  mSetObj$analSet$pca$load.x.uniq <- load.x.uniq;
+  mSetObj$analSet$pca$imp.loads<-loadings; # set up the loading matrix
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pca.loading <- imgName;
+  plotType <- mSetObj$analSet$pca$loading.type;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  par(mar=c(6,5,2,6));
+  plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
+  
+  mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+  
+  if(plotType=="all"){
+    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+  }else if(plotType == "custom"){
+    if(length(mSetObj$custom.cmpds) > 0){
+      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+      text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+    }
+  }else{
+    # do nothing
+  }
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
+  
+}
+
+#'Create PCA Biplot, set xpd = T to plot outside margin
+#'@description Rotate PCA analysis
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@usage PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@export
+#'
+PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  choices = c(inx1, inx2);
+  scores <- mSetObj$analSet$pca$x;
+  lam <- mSetObj$analSet$pca$sdev[choices]
+  n <- NROW(scores)
+  lam <- lam * sqrt(n);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pca.biplot<-imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  biplot(t(t(scores[, choices]) / lam), t(t(mSetObj$analSet$pca$rotation[, choices]) * lam), xpd =T, cex=0.9);
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'PLS analysis using oscorespls (Orthogonal scores algorithm)
+#'so that VIP can be calculated
+#'note: the VIP is calculated only after PLSDA-CV is performed
+#'to determine the best # of comp. used for VIP
+#'@description PLS analysis using oscorespls
+#'@param mSetObj Input name of the created mSet Object
+#'@param reg Logical
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  comp.num <- dim(mSetObj$dataSet$norm)[1]-1;
+
+  if(comp.num > 8) {
+    #need to deal with small number of predictors
+    comp.num <- min(dim(mSetObj$dataSet$norm)[2], 8)
+  }
+  
+  if(.on.public.web){
+    load_pls()
+  }
+  
+  # note, standardize the cls, to minimize the impact of categorical to numerical impact
+  if(reg){
+    cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  }else{
+    cls <- model.matrix(~mSetObj$dataSet$cls-1);
+  }
+  
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  mSetObj$analSet$plsr <- pls::plsr(cls~datmat, method='oscorespls', ncomp=comp.num);
+  mSetObj$analSet$plsr$reg <- reg;
+  mSetObj$analSet$plsr$loading.type <- "all";
+  mSetObj$custom.cmpds <- c();
+  
+  write.csv(signif(mSetObj$analSet$plsr$scores,5), row.names=rownames(mSetObj$dataSet$norm), file="plsda_score.csv");
+  write.csv(signif(mSetObj$analSet$plsr$loadings,5), file="plsda_loadings.csv");
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PLS pairwise summary
+#'@description Plot PLS pairwise summary
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pc.num Numeric, indicate the number of principal components
+#'@export
+
+PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+    
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pls.pair <- imgName;
+  
+  vars <- round(100*mSetObj$analSet$plsr$Xvar[1:pc.num]/mSetObj$analSet$plsr$Xtotvar,1);
+  my.data <- mSetObj$analSet$plsr$scores[,1:pc.num];
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
+  pairs(my.data, col=GetColorSchema(mSetObj), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PLS score plot
+#'@description Plot PLS score plot
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg Numeric, default is 0.95
+#'@param show Show labels, 1 or 0
+#'@param grey.scale Numeric, use a grey scale (0) or not (1)
+#'@param use.sparse Logical, use a sparse algorithm (T) or not (F)
+#'@export
+#'
+PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, use.sparse=FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pls.score2d <- imgName;
+  
+  lv1 <- mSetObj$analSet$plsr$scores[,inx1];
+  lv2 <- mSetObj$analSet$plsr$scores[,inx2];
+  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$plsr$Xvar[inx1]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
+  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,3,3));
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+  
+  # obtain ellipse points to the scatter plot for each category
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  lvs <- levels(cls);
+  pts.array <- array(0, dim=c(100,2,length(lvs)));
+  for(i in 1:length(lvs)){
+    inx <- mSetObj$dataSet$cls == lvs[i];
+    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
+    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
+    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+  }
+  
+  xrg <- range(lv1, pts.array[,1,]);
+  yrg <- range(lv2, pts.array[,2,]);
+  x.ext<-(xrg[2]-xrg[1])/12;
+  y.ext<-(yrg[2]-yrg[1])/12;
+  xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
+  ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
+  
+  ## cols = as.numeric(dataSet$cls)+1;
+  cols <- GetColorSchema(mSetObj, grey.scale==1);
+  uniq.cols <- unique(cols);
+  
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  
+  # make sure name and number of the same order DO NOT USE levels, which may be different
+  legend.nm <- unique(as.character(sort(cls)));
+  ## uniq.cols <- unique(cols);
+  
+  ## BHAN: when same color is choosen for black/white; it makes an error
+  # names(uniq.cols) <- legend.nm;
+  if (length(uniq.cols) > 1) {
+    names(uniq.cols) <- legend.nm;
+  }
+  # draw ellipse
+  for(i in 1:length(lvs)){
+    if ( length(uniq.cols) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
+    } else {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
+    }
+    if(grey.scale) {
+      lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
+    }
+  }
+  
+  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  if(grey.scale) {
+    cols <- rep("black", length(cols));
+  }
+  if(show==1){ # display sample name set on
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    points(lv1, lv2, pch=pchs, col=cols);
+  }else{
+    if (length(uniq.cols) == 1) {
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+    } else {
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+      }else{
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+      }
+    }
+  }
+  
+  uniq.pchs <- unique(pchs);
+  if(grey.scale) {
+    uniq.cols <- "black";
+  }
+  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PLS 3D score plot
+#'@description Plot PLS 3D score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  pls3d <- list();
+  pls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$plsr$Xvar[c(inx1, inx2, inx3)]/mSetObj$analSet$plsr$Xtotvar, 1), "%)", sep="");
+  coords <- data.frame(t(signif(mSetObj$analSet$plsr$score[,c(inx1, inx2, inx3)], 5)));
+  colnames(coords) <- NULL;
+  pls3d$score$xyz <- coords;
+  pls3d$score$name <- rownames(mSetObj$dataSet$norm);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  
+  pls3d$score$facA <- cls;
+  
+  # now set color for each group
+  cols <- unique(GetColorSchema(mSetObj));
+  rgbcols <- col2rgb(cols);
+  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
+  pls3d$score$colors <- cols;
+  
+  imgName = paste(imgName, ".", format, sep="");
+  json.obj <- RJSONIO::toJSON(pls3d, .na='null');
+  sink(imgName);
+  cat(json.obj);
+  sink();
+  mSet$imgSet$pls.score3d <- imgName;
+  return(.set.mSet(mSetObj));
+}
+
+#'@export
+PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  pls = mSetObj$analSet$plsr
+  coords<-signif(as.matrix(cbind(pls$loadings[,inx1],pls$loadings[,inx2],pls$loadings[,inx3])),5);
+  pls3d <- list();
+  
+  pls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");
+  coords <- data.frame(t(signif(pls$loadings[,c(inx1, inx2, inx3)], 5)));
+  
+  colnames(coords) <- NULL; 
+  pls3d$loading$xyz <- coords;
+  pls3d$loading$name <- rownames(pls$loadings);
+  pls3d$loading$entrez <-rownames(pls$loadings); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  
+  pls3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- RJSONIO::toJSON(pls3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
+
+}
+
+#'Update PLS loadings
+#'@description Update the PLS loadings
+#'@param mSetObj Input name of the created mSet Object
+#'@param plotType Set annotation type, "all" to label all variables and
+#'"none" to label no variables.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+UpdatePLS.Loading<- function(mSetObj=NA, plotType){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$plsr$loading.type <- plotType;
+  mSetObj$custom.cmpds <- c();
+  return(.set.mSet(mSetObj));
+}
+
+
+#'Plot PLS loading plot, also set the loading matrix for display
+#'@description Plot PLS loading plot, also set the loading matrix for display
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5. The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  # named vector
+  load1<-mSetObj$analSet$plsr$loadings[,inx1];
+  load2<-mSetObj$analSet$plsr$loadings[,inx2];
+  loadings = signif(as.matrix(cbind(load1, load2)),5);
+  
+  ldName1<-paste("Loadings", inx1);
+  ldName2<-paste("Loadings", inx2)
+  colnames(loadings)<-c(ldName1, ldName2);
+  load.x.uniq <- jitter(loadings[,1]);
+  names(load.x.uniq) <- rownames(loadings);
+  mSetObj$analSet$plsr$load.x.uniq <- load.x.uniq;
+  mSetObj$analSet$plsr$imp.loads<-loadings; # set up loading matrix
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pls.loading <- imgName;
+  plotType <- mSetObj$analSet$plsr$loading.type;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  par(mar=c(6,4,4,5));
+  plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
+  
+  mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+  
+  if(plotType=="all"){
+    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+  }else if(plotType == "custom"){
+    if(length(mSetObj$custom.cmpds) > 0){
+      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+      text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
+    }
+  }else{
+    # do nothing
+  }
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'PLS-DA classification and feature selection
+#'@description PLS-DA classification and feature selection
+#'@param mSetObj Input name of the created mSet Object
+#'@param methodName Logical, by default set to TRUE
+#'@param compNum GetDefaultPLSCVComp()
+#'@param choice Input the choice, by default it is Q2
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2"){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(.on.public.web){
+    load_caret()
+  }
+  
+  # get classification accuracy using caret
+  plsda.cls <- caret::train(mSetObj$dataSet$norm, mSetObj$dataSet$cls, "pls", trControl=caret::trainControl(method=ifelse(methodName == 'L', "LOOCV", 'CV')), tuneLength=compNum);
+  
+  # note, for regression, use model matrix
+  if(mSetObj$analSet$plsr$reg){
+    cls<-cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  }else{
+    cls<-model.matrix(~mSetObj$dataSet$cls-1);
+  }
+  
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  
+  # use the classifical regression to get R2 and Q2 measure
+  plsda.reg <- pls::plsr(cls~datmat,method ='oscorespls', ncomp=compNum, validation= ifelse(methodName == 'L', "LOO", 'CV'));
+  fit.info <- pls::R2(plsda.reg, estimate = "all")$val[,1,];
+  
+  # combine accuracy, R2 and Q2
+  accu <- plsda.cls$results[,2]
+  all.info <- rbind(accu, fit.info[,-1]);
+  
+  rownames(all.info) <- c("Accuracy", "R2", "Q2");
+  
+  # default use best number determined by Q2
+  if(choice == 'Q2'){
+    best.num <- which(all.info[3,] == max(all.info[3,]));
+  }else if(choice == "R2"){
+    best.num <- which(all.info[2,] == max(all.info[2,]));
+  }else{
+    best.num <- which(all.info[1,] == max(all.info[1,]));
+  }
+  
+  # get coef. table, this can be error when class is very unbalanced
+  coef.mat <- try(caret::varImp(plsda.cls, scale=T)$importance);
+  if(class(coef.mat) == "try-error") {
+    coef.mat <- NULL;
+  }else{
+    if(mSetObj$dataSet$cls.num > 2){ # add an average coef for multiple class
+      coef.mean <- apply(coef.mat, 1, mean);
+      coef.mat <- cbind(coef.mean = coef.mean, coef.mat);
+    }
+    # rearange in decreasing order, keep as matrix, prevent dimesion dropping if only 1 col
+    inx.ord <- order(coef.mat[,1], decreasing=T);
+    coef.mat <- data.matrix(coef.mat[inx.ord, ,drop=FALSE]);
+    write.csv(signif(coef.mat,5), file="plsda_coef.csv"); # added 27 Jan 2014
+  }
+  # calculate VIP http://mevik.net/work/software/VIP.R
+  pls <- mSetObj$analSet$plsr;
+  b <- c(pls$Yloadings)[1:compNum];
+  T <- pls$scores[,1:compNum, drop = FALSE]
+  SS <- b^2 * colSums(T^2)
+  W <- pls$loading.weights[,1:compNum, drop = FALSE]
+  Wnorm2 <- colSums(W^2);
+  SSW <- sweep(W^2, 2, SS / Wnorm2, "*")
+  vips <- sqrt(nrow(SSW) * apply(SSW, 1, cumsum) / cumsum(SS));
+  if(compNum > 1){
+    vip.mat <- as.matrix(t(vips));
+  }else{
+    vip.mat <- as.matrix(vips);
+  }
+  colnames(vip.mat) <- paste("Comp.", 1:ncol(vip.mat));
+  write.csv(signif(vip.mat,5),file="plsda_vip.csv");
+  
+  mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, vip.mat=vip.mat, fit.info=all.info);
+  return(.set.mSet(mSetObj));
+}
+
+#'Perform PLS-DA permutation
+#'@description Perform PLS-DA permutation using training classification accuracy as
+#'indicator, for two or multi-groups
+#'@param mSetObj Input name of the created mSet Object
+#'@param num Numeric, input the number of permutations
+#'@param type Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  orig.cls <- cls <- as.numeric(mSetObj$dataSet$cls);
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  best.num <- mSetObj$analSet$plsda$best.num;
+  
+  # dummy is not used, for the purpose to maintain lapply API
+  Get.pls.bw <- function(dummy){
+    cls <- cls[order(runif(length(cls)))];
+    pls <- caret::plsda(datmat, as.factor(cls), ncomp=best.num);
+    pred <- predict(pls, datmat);
+    Get.bwss(pred, cls);
+  }
+  
+  Get.pls.accu <- function(dummy){
+    cls <- cls[order(runif(length(cls)))];
+    pls <- caret::plsda(datmat, as.factor(cls), ncomp=best.num);
+    pred <- predict(pls, datmat);
+    sum(pred == cls)/length(cls);
+  }
+  
+  # first calculate the bw values with original labels
+  pls <- caret::plsda(datmat, as.factor(orig.cls), ncomp=best.num);
+  pred.orig <- predict(pls, datmat);
+  if(type=="accu"){
+    perm.type = "prediction accuracy";
+    res.orig <- sum(pred.orig == orig.cls)/length(orig.cls);
+    res.perm <- Perform.permutation(num, Get.pls.accu);
+  }else{
+    perm.type = "separation distance";
+    res.orig <- Get.bwss(pred.orig, orig.cls);
+    res.perm <- Perform.permutation(num, Get.pls.bw);
+  }
+  # perm.num may be adjusted on public server
+  perm.num <- res.perm$perm.num;
+  perm.res <- res.perm$perm.res;
+  perm.vec <- c(res.orig, unlist(perm.res, use.names=FALSE));
+  # check for infinite since with group variance could be zero for perfect classification
+  inf.found = TRUE;
+  if(sum(is.finite(perm.vec))==length(perm.vec)){
+    inf.found = FALSE;
+  }else {
+    if(sum(is.finite(perm.vec))==0){ # all are infinite, give a random number 10
+      perm.vec<-rep(10, length(perm.vec));
+    }else{ # if not all inf, replace with the 10 fold of non-inf values
+      perm.vec[!is.finite(perm.vec)]<-10*max(perm.vec[is.finite(perm.vec)]);
+    }
+  }
+  
+  # calculate the significant p value as the proportion of sampled permutations better than or equal to original one
+  # note, the precision is determined by the permutation number i.e. for 100 time, no better than original
+  # p value is < 0.01, we can not say it is zero
+  better.hits <- sum(perm.vec[-1]>=perm.vec[1]);
+  if(better.hits == 0) {
+    p <- paste("p < ", 1/perm.num, " (", better.hits, "/", perm.num, ")", sep="");
+  }else{
+    p <- better.hits/perm.num;
+    p <- paste("p = ", signif(p, digits=5), " (", better.hits, "/", perm.num, ")", sep="");
+  }
+  
+  mSetObj$analSet$plsda$permut.p <- p;
+  mSetObj$analSet$plsda$permut.inf <- F;
+  mSetObj$analSet$plsda$permut.type <- perm.type;
+  mSetObj$analSet$plsda$permut <- perm.vec;
+  
+  msg <- paste("Empirical p value:", p);
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(msg)
+  }else{
+    print(msg);
+    return(.set.mSet(mSetObj));
+  }
+}
+
+#'Plot PLS important features
+#'@description Plot PLS important features, BHan: added bgcolor parameter for B/W color
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param type Indicate the type variables of importance to use, "vip" to use VIp scores, or "type"
+#'for coefficients  
+#'@param feat.nm Feature name
+#'@param feat.num Feature numbers
+#'@param color.BW Logical, true to use black and white, or false to not
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$pls.imp<-imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  if(type=="vip"){
+    mSetObj$analSet$plsda$imp.type <- "vip";
+    vips <- mSetObj$analSet$plsda$vip.mat[,feat.nm];
+    PlotImpVar(mSetObj, vips, "VIP scores", feat.num, color.BW);
+  }else{
+    mSetObj$analSet$plsda$imp.type <- "coef";
+    data<-mSetObj$analSet$plsda$coef.mat[,feat.nm];
+    PlotImpVar(mSetObj, data, "Coefficients", feat.num, color.BW);
+  }
+  dev.off();
+  
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot PLS important variables,
+#'@description Plot PLS important variables, BHan: added bgcolor parameter for B/W color
+#'@param mSetObj Input name of the created mSet Object
+#'@param imp.vec Input the vector of important variables
+#'@param xlbl Input the x-label
+#'@param feat.num Numeric, set the feature numbers, default is set to 15
+#'@param color.BW Use black-white for plot (T) or colors (F)
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  cls.len <- length(levels(mSetObj$dataSet$cls));
+  if(cls.len == 2){
+    rt.mrg <- 5;
+  }else if(cls.len == 3){
+    rt.mrg <- 6;
+  }else if(cls.len == 4){
+    rt.mrg <- 7;
+  }else if(cls.len == 5){
+    rt.mrg <- 8;
+  }else if(cls.len == 6){
+    rt.mrg <- 9;
+  }else{
+    rt.mrg <- 11;
+  }
+  op <- par(mar=c(5,7,3,rt.mrg)); # set right side margin with the number of class
+  
+  if(feat.num <= 0){
+    feat.num = 15;
+  }
+  
+  if(feat.num > length(imp.vec)){
+    feat.num <- length(imp.vec);
+  }
+  
+  # first get the top subset
+  imp.vec <- rev(sort(imp.vec))[1:feat.num];
+  
+  # reverser the order for display
+  imp.vec <- sort(imp.vec);
+  
+  # as data should already be normalized, use mean/median should be the same
+  # mns is a list contains means of all vars at each level
+  # conver the list into a matrix with each row contains var averages across different lvls
+  mns <- by(mSetObj$dataSet$norm[, names(imp.vec)], mSetObj$dataSet$cls,
+            function(x){ # inner function note, by send a subset of dataframe
+              apply(x, 2, mean, trim=0.1)
+            });
+  mns <- t(matrix(unlist(mns), ncol=feat.num, byrow=TRUE));
+  
+  # vip.nms <-substr(names(imp.vec), 1, 12);
+  vip.nms <- substr(names(imp.vec), 1, 14);
+  names(imp.vec) <- NULL;
+  
+  # modified for B/W color
+  dotcolor <- ifelse(color.BW, "darkgrey", "blue");
+  dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.3);
+  
+  mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1)
+  
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  
+  # get character width
+  shift <- 2*par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+  
+  x <- rep(lgd.x, feat.num);
+  y <- 1:feat.num;
+  par(xpd=T);
+  
+  nc <- ncol(mns);
+  
+  # modified for B/W color
+  colorpalette <- ifelse(color.BW, "Greys", "RdYlGn");
+  col <- colorRampPalette(RColorBrewer::brewer.pal(10, colorpalette))(nc); # set colors for each class
+  if(color.BW) col <- rev(col);
+  
+  # calculate background
+  bg <- matrix("", nrow(mns), nc);
+  for (m in 1:nrow(mns)){
+    bg[m,] <- (col[nc:1])[rank(mns[m,])];
+  }
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  cls.lbl <- levels(cls);
+  
+  for (n in 1:ncol(mns)){
+    points(x,y, bty="n", pch=22, bg=bg[,n], cex=3);
+    # now add label
+    text(x[1], axis.lims[4], cls.lbl[n], srt=45, adj=c(0.2,0.5));
+    # shift x, note, this is good for current size
+    x <- x + shift/1.25;
+  }
+  
+  # now add color key, padding with more intermediate colors for contiuous band
+  col <- colorRampPalette(RColorBrewer::brewer.pal(25, colorpalette))(50)
+  if(color.BW) col <- rev(col);
+  
+  nc <- length(col);
+  x <- rep(x[1] + shift, nc);
+  
+  shifty <- (axis.lims[4]-axis.lims[3])/3;
+  starty <- axis.lims[3] + shifty;
+  endy <- axis.lims[3] + 2*shifty;
+  y <- seq(from = starty, to = endy, length = nc);
+  
+  points(x,y, bty="n", pch=15, col=rev(col), cex=2);
+  
+  text(x[1], endy+shifty/8, "High");
+  text(x[1], starty-shifty/8, "Low");
+  
+  par(op);
+}
+
+#'Plot PLS-DA classification performance using different components
+#'@description Plot plsda classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  res <- mSetObj$analSet$plsda$fit.info;
+  colnames(res) <- 1:ncol(res);
+  best.num <- mSetObj$analSet$plsda$best.num;
+  choice <- mSetObj$analSet$plsda$choice;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 7;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w*5/7;
+  
+  mSetObj$imgSet$pls.class <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,2,7)); # put legend on the right outside
+  barplot(res, beside = TRUE, col = c("lightblue", "mistyrose","lightcyan"), ylim= c(0,1.05), xlab="Number of components", ylab="Performance");
+  
+  if(choice == "Q2"){
+    text((best.num-1)*3 + best.num + 2.5, res[3,best.num]+ 0.02, labels = "*", cex=2.5, col="red");
+  }else if(choice == "R2"){
+    text((best.num-1)*3 + best.num + 1.5, res[2,best.num]+ 0.02, labels = "*", cex=2.5, col="red");
+  }else{
+    text((best.num-1)*3 + best.num + 0.5, res[1,best.num]+ 0.02, labels = "*", cex=2.5, col="red");
+  }
+  
+  # calculate the maximum y position, each bar is 1, place one space between the group
+  xpos <- ncol(res)*3 + ncol(res) + 1;
+  legend(xpos, 1.0, rownames(res), fill = c("lightblue", "mistyrose","lightcyan"), xpd=T);
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+
+#'Plot PLS-DA classification performance using different components, permutation
+#'@description Plot plsda classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  bw.vec <- mSetObj$analSet$plsda$permut;
+  len <- length(bw.vec);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w*6/8;
+  
+  mSetObj$imgSet$pls.permut <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,2,4));
+  hst <- hist(bw.vec, breaks = "FD", freq=T,
+              ylab="Frequency", xlab= 'Permutation test statistics', col="lightblue", main="");
+  
+  # add the indicator using original label
+  h <- max(hst$counts)
+  arrows(bw.vec[1], h/5, bw.vec[1], 0, col="red", lwd=2);
+  text(bw.vec[1], h/3.5, paste('Observed \n statistic \n', mSetObj$analSet$plsda$permut.p), xpd=T);
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Perform OPLS-DA
+#'@description Orthogonal PLS-DA (from ropls)
+#'Add reg (regression i.e. if class order matters)
+#'@param mSetObj Input name of the created mSet Object
+#'@param reg Logical
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
+  
+  mSetObj <- .get.mSet(mSetObj);
+
+  mSetObj$analSet$opls.reg <- reg;  
+
+  # default options for feature labels on splot
+  mSetObj$custom.cmpds <- c();
+  mSetObj$analSet$oplsda$splot.type <- "all";
+
+  if(reg==TRUE){
+    cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  }else{
+    cls<-model.matrix(~mSetObj$dataSet$cls-1);
+  }
+  
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
+  
+  if(.on.public.web){
+    compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+  }
+  my.res <- perform_opls(datmat, cls, predI=1, permI=0, orthoI=NA, crossvalI=cv.num);
+  
+  mSetObj$analSet$oplsda <- my.res;
+  score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
+  colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
+  write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
+  load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
+  colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
+  write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
+  
+  return(.set.mSet(mSetObj));
+}
+
+#'Create OPLS-DA score plot
+#'@description Orthogonal PLS-DA (from ropls) score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg Numeric
+#'@param show Show variable labels, 1 or O
+#'@param grey.scale Numeric, indicate grey-scale, 0 for no, and 1 for yes 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+    
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$opls.score2d <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,3,3));
+  lv1 <- mSetObj$analSet$oplsda$scoreMN[,1];
+  lv2 <- mSetObj$analSet$oplsda$orthoScoreMN[,1];
+  xlabel <- paste("T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["p1", "R2X"],1), "%)");
+  ylabel <- paste("Orthogonal T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["o1", "R2X"],1), "%)");
+  
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+  
+  # obtain ellipse points to the scatter plot for each category
+  lvs <- levels(mSetObj$dataSet$cls);
+  pts.array <- array(0, dim=c(100,2,length(lvs)));
+  for(i in 1:length(lvs)){
+    inx <- mSetObj$dataSet$cls == lvs[i];
+    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
+    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
+    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+  }
+  
+  xrg <- range(lv1, pts.array[,1,]);
+  yrg <- range(lv2, pts.array[,2,]);
+  x.ext<-(xrg[2]-xrg[1])/12;
+  y.ext<-(yrg[2]-yrg[1])/12;
+  xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
+  ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
+  
+  ## cols = as.numeric(dataSet$cls)+1;
+  cols <- GetColorSchema(mSetObj, grey.scale==1);
+  uniq.cols <- unique(cols);
+  
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  
+  # make sure name and number of the same order DO NOT USE levels, which may be different
+  legend.nm <- unique(as.character(mSetObj$dataSet$cls));
+  ## uniq.cols <- unique(cols);
+  
+  if (length(uniq.cols) > 1 ) {
+    names(uniq.cols) <- legend.nm;
+  }
+  # draw ellipse
+  for(i in 1:length(lvs)){
+    if ( length(uniq.cols) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.2), border=NA);
+    } else {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.2), border=NA);
+    }
+    if(grey.scale) {
+      lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
+    }
+  }
+  
+  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  if(grey.scale) {
+    cols <- rep("black", length(cols));
+  }
+  if(show==1){ # display sample name set on
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    points(lv1, lv2, pch=pchs, col=cols);
+  }else{
+    if (length(uniq.cols) == 1) {
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+    } else {
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+      }else{
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+      }
+    }
+  }
+  
+  uniq.pchs <- unique(pchs);
+  if(grey.scale) {
+    uniq.cols <- "black";
+  }
+  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Update OPLS loadings
+#'@description Update the OPLS loadings
+#'@param mSetObj Input name of the created mSet Object
+#'@param plotType Set annotation type, "all" to label all variables and
+#'"none" to label no variables.
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$oplsda$splot.type <- plotType;
+  mSetObj$custom.cmpds <- c();
+  return(.set.mSet(mSetObj));
+}
+
+#'S-plot for OPLS-DA
+#'@description Orthogonal PLS-DA (from ropls) 
+#'S-plot for important features from OPLS-DA
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  s <- as.matrix(mSetObj$dataSet$norm);
+  T <- as.matrix(mSetObj$analSet$oplsda$scoreMN)
+  p1 <- c()
+  for (i in 1:ncol(s)) {
+    scov <- cov(s[,i], T)
+    p1 <- matrix(c(p1, scov), ncol=1)
+  }
+  pcorr1 <- c()
+  for (i in 1:nrow(p1)) {
+    den <- apply(T, 2, sd)*sd(s[,i])
+    corr1 <- p1[i,]/den
+    pcorr1 <- matrix(c(pcorr1, corr1), ncol=1)
+  }
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- h <- 8;
+  }else if(width == 0){
+    
+  }else{
+    w <- h <- width;
+  }
+  
+  mSetObj$imgSet$opls.loading<-imgName;
+  mSetObj$analSet$oplsda$splot.type <- plotType;
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,4,7))
+  plot(p1, pcorr1, type="n", xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance");
+  grid(col="lightgrey", lty=3, lwd = 1);
+  points(p1, pcorr1, pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+  opls.axis.lims <- par("usr");
+  if(plotType=="all"){
+    text(p1, pcorr1, labels=colnames(s), cex=0.8, pos=4, xpd=TRUE, col="blue");
+  }else if(plotType == "custom"){
+    if(length(mSetObj$custom.cmpds) > 0){
+      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+      text(p1[hit.inx], pcorr1[hit.inx], labels=colnames(s)[hit.inx], pos=4, xpd=TRUE, col="blue");
+    }
+  }else{
+    # do nothing
+  }
+  dev.off();
+  splot.mat <- cbind(jitter(p1),p1, pcorr1);
+  rownames(splot.mat) <- colnames(s); 
+  colnames(splot.mat) <- c("jitter", "p[1]","p(corr)[1]");
+  write.csv(signif(splot.mat[,2:3],5), file="oplsda_splot.csv"); 
+  mSetObj$analSet$oplsda$splot.mat <- splot.mat;
+  mSetObj$analSet$oplsda$opls.axis.lims <- opls.axis.lims;   
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot loading compounds
+#'@description Plot loading compounds
+#'@param mSetObj Input name of the created mSet Object
+#'@param cmpdNm Input the name of the selected compound
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@export
+#'
+PlotLoadingCmpd<-function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  # need to record the clicked compounds
+  mSetObj$custom.cmpds <- c(mSetObj$custom.cmpds, cmpdNm);
+  .set.mSet(mSetObj);
+  
+  return(PlotCmpdView(mSetObj, cmpdNm, format, dpi, width));
+}
+
+#'Plot OPLS 
+#'@description Plot OPLS 
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@export
+#'
+PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 9;
+    
+  }else{
+    w <- width; 
+  }
+  h <- w*6/9;
+  
+  mSetObj$imgSet$opls.class <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  # the model R2Y and Q2Y
+  par(mar=c(5,5,4,8)); # put legend on the right outside
+  modBarDF <- mSetObj$analSet$oplsda$modelDF[!(rownames(mSetObj$analSet$oplsda$modelDF) %in% c("rot")), ];
+  mod.dat <- data.matrix(modBarDF[!rownames(modBarDF)%in% ("sum"), c("R2X", "R2Y", "Q2")]);
+  mod.dat <- t(mod.dat);
+  bplt <- barplot(mod.dat,beside=TRUE, names.arg = colnames(mod.dat),xlab = "");
+  axis(2, lwd.ticks=1);
+  barplot(mod.dat,add = TRUE, beside = TRUE, col = c("lightblue", "mistyrose", "lavender"));
+  text(x=bplt, y=mod.dat+max(mod.dat)/25, labels=as.character(mod.dat), xpd=TRUE)
+  xpos <- nrow(mod.dat)*ncol(mod.dat) + ncol(mod.dat) + 0.5
+  ypos <- max(mod.dat)/2;
+  legend(xpos, ypos, legend = c("R2X", "R2Y", "Q2"), pch=15, col=c("lightblue", "mistyrose", "lavender"), xpd=T, bty="n");
+  dev.off();
+  
+  write.csv(mod.dat, file="oplsda_model.csv");
+  
+  return(.set.mSet(mSetObj));
+}
+
+#'Perform OPLS-DA permutation
+#'@description Orthogonal PLS-DA (from ropls) 
+#'perform permutation, using training classification accuracy as
+#'indicator, for two or multi-groups
+#'@param mSetObj Input name of the created mSet Object
+#'@param num Input the number of permutations, default is set to 100.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+OPLSDA.Permut<-function(mSetObj=NA, num=100){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  if(mSetObj$analSet$opls.reg){
+    cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
+  }else{
+    cls<-model.matrix(~mSetObj$dataSet$cls-1);
+  }
+  
+  datmat <- as.matrix(mSetObj$dataSet$norm);
+  cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
+  
+  if(.on.public.web){
+    compiler::loadcmp("../../rscripts/metaboanalystr/stats_opls.Rc");    
+  }
+  my.res <- perform_opls(datmat,cls, predI=1, orthoI=NA, permI=num, crossvalI=cv.num);
+  
+  r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
+  q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
+  
+  # note, actual permutation number may be adjusted in public server
+  perm.num <- my.res$suppLs[["permI"]];
+
+  mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot OPLS-DA permutation
+#'@description Orthogonal PLS-DA (from ropls) 
+#'perform permutation, using training classification accuracy as
+#'indicator, for two or multi-groups
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  perm.res <- mSetObj$analSet$oplsda$perm.res;
+
+  r.vec <- perm.res$r.vec;
+  q.vec <- perm.res$q.vec;
+  perm.num <- perm.res$perm.num;
+  
+  better.rhits <- sum(r.vec[-1]>=r.vec[1]);
+  
+  if(better.rhits == 0) {
+    pr <- paste("p < ", 1/perm.num, " (", better.rhits, "/", perm.num, ")", sep="");
+  }else{
+    p <- better.rhits/perm.num;
+    pr <- paste("p = ", signif(p, digits=5), " (", better.rhits, "/", perm.num, ")", sep="");
+  }
+  better.qhits <- sum(q.vec[-1]>=q.vec[1]);
+  if(better.qhits == 0) {
+    pq <- paste("p < ", 1/perm.num, " (", better.qhits, "/", perm.num, ")", sep="");
+  }else{
+    p <- better.qhits/perm.num;
+    pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", perm.num, ")", sep="");
+  }
+  
+  rng <- range(c(r.vec, q.vec, 1));
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 8;
+  }else{
+    w <- width; 
+  }
+  h <- w*6/8;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,2,7));
+  rhst <- hist(r.vec[-1], plot=FALSE);
+  qhst <- hist(q.vec[-1], plot=FALSE);
+  h <- max(c(rhst$counts, qhst$counts))+1;
+  bin.size <- min(c(rhst$breaks[2]-rhst$breaks[1], qhst$breaks[2]-qhst$breaks[1]));
+  rbins <- seq(min(rhst$breaks),max(rhst$breaks),bin.size);
+  qbins <- seq(min(qhst$breaks),max(qhst$breaks),bin.size);
+  hist(r.vec[-1], xlim=rng, ylim=c(0, h), breaks=rbins, border=F, ylab="Frequency", xlab= 'Permutations', 
+       col=adjustcolor("lightblue", alpha=0.6), main="");
+  hist(q.vec[-1], add=TRUE,breaks=qbins, border=F, col=adjustcolor("mistyrose", alpha=0.6));
+  
+  arrows(r.vec[1], h/3, r.vec[1], 0, length=0.1,angle=30,lwd=2);
+  text(r.vec[1], h/2.5, paste('R2Y:', r.vec[1], "\n", pr), xpd=TRUE);
+  
+  arrows(q.vec[1], h/2, q.vec[1], 0, length=0.1,angle=30,lwd=2);
+  text(q.vec[1], h/1.8, paste('Q2:', q.vec[1], "\n", pq), xpd=TRUE);
+  
+  legend(1, h/3, legend = c("Perm R2Y", "Perm Q2"), pch=15, col=c("lightblue", "mistyrose"), xpd=T, bty="n");
+  
+  dev.off();
+  
+  mSetObj$imgSet$opls.permut <- imgName;
+  
+  msg <- paste("Empirical p-values Q2: ", pq, " and R2Y: ", pr);
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(msg);
+  }else{
+    print(msg);
+    return(.set.mSet(mSetObj));
+  }
+}
+
+#'Perform SPLS-DA
+#'@description Sparse PLS-DA (from mixOmics) 
+#'@param mSetObj Input name of the created mSet Object
+#'@param comp.num Input the number of computations to run 
+#'@param var.num Input the number of variables
+#'@param compVarOpt Input the option to perform SPLS-DA
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+
+SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold"){
+  
+  if(compVarOpt == "same"){
+    comp.var.nums <- rep(var.num, comp.num);
+  }else{
+    if(exists("comp.var.nums") && all(comp.var.nums > 0)){
+      comp.var.nums <- ceiling(comp.var.nums);
+    }else{
+      msg <- c("All values need to be positive integers!");
+      return(0);
+    }
+  }
+
+    mSetObj <- .get.mSet(mSetObj);  
+  
+    # note, standardize the cls, to minimize the impact of categorical to numerical impact
+    cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
+    datmat <- as.matrix(mSetObj$dataSet$norm);
+    if(.on.public.web){
+        compiler::loadcmp("../../rscripts/metaboanalystr/stats_spls.Rc");    
+    }
+    my.res <- splsda(datmat, cls, ncomp=comp.num, keepX=comp.var.nums);
+    # perform validation
+    perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = 5);
+    my.res$error.rate <- perf.res$error.rate$overall;
+    
+    mSetObj$analSet$splsr <- my.res;
+    score.mat <- mSetObj$analSet$splsr$variates$X;
+    write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
+    load.mat <- score.mat <- mSetObj$analSet$splsr$loadings$X;
+    write.csv(signif(load.mat,5), file="splsda_loadings.csv");
+    return(.set.mSet(mSetObj));
+}
+
+#'Plot SPLS-DA
+#'@description Sparse PLS-DA (from mixOmics) pairwise summary plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param pc.num Numeric, indicate the number of principle components
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.pair <- imgName;
+  
+  if(pc.num > mSetObj$analSet$splsr$ncomp){
+    pc.num <- mSetObj$analSet$splsr$ncomp;
+  }
+  vars <- round(100*mSetObj$analSet$splsr$explained_variance$X,1);
+  my.data <- mSetObj$analSet$splsr$variates$X[,1:pc.num];
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
+  ellipse::pairs(my.data, col=GetColorSchema(mSetObj), pch=as.numeric(mSetObj$dataSet$cls)+1, labels=pclabels)
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'Score Plot SPLS-DA
+#'@description Sparse PLS-DA (from mixOmics) score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param reg Numeric, between 1 and 0
+#'@param show Numeric, 1 or 0
+#'@param grey.scale Numeric, use grey-scale, 0 for no, and 1 for yes. 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0){
+  
+  mSetObj <- .get.mSet(mSetObj);
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.score2d <- imgName;
+  
+  lv1 <- mSetObj$analSet$splsr$variates$X[,inx1];
+  lv2 <- mSetObj$analSet$splsr$variates$X[,inx2];
+  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx1],1), "%)");
+  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,3,3));
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+  
+  # obtain ellipse points to the scatter plot for each category
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  lvs <- levels(cls);
+  pts.array <- array(0, dim=c(100,2,length(lvs)));
+  for(i in 1:length(lvs)){
+    inx <- mSetObj$dataSet$cls == lvs[i];
+    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
+    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
+    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+  }
+  
+  xrg <- range(lv1, pts.array[,1,]);
+  yrg <- range(lv2, pts.array[,2,]);
+  x.ext <- (xrg[2]-xrg[1])/12;
+  y.ext <- (yrg[2]-yrg[1])/12;
+  xlims <- c(xrg[1]-x.ext, xrg[2]+x.ext);
+  ylims <- c(yrg[1]-y.ext, yrg[2]+y.ext);
+  
+  ## cols = as.numeric(dataSet$cls)+1;
+  cols <- GetColorSchema(mSetObj, grey.scale==1);
+  uniq.cols <- unique(cols);
+  
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  grid(col = "lightgray", lty = "dotted", lwd = 1);
+  
+  # make sure name and number of the same order DO NOT USE levels, which may be different
+  legend.nm <- unique(as.character(sort(cls)));
+  ## uniq.cols <- unique(cols);
+  
+  ## BHAN: when same color is choosen for black/white; it makes an error
+  # names(uniq.cols) <- legend.nm;
+  if (length(uniq.cols) > 1) {
+    names(uniq.cols) <- legend.nm;
+  }
+  # draw ellipse
+  for(i in 1:length(lvs)){
+    if (length(uniq.cols) > 1) {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols[lvs[i]], alpha=0.25), border=NA);
+    } else {
+      polygon(pts.array[,,i], col=adjustcolor(uniq.cols, alpha=0.25), border=NA);
+    }
+    if(grey.scale) {
+      lines(pts.array[,,i], col=adjustcolor("black", alpha=0.5), lty=2);
+    }
+  }
+  
+  pchs <- GetShapeSchema(mSetObj, show, grey.scale);
+  if(grey.scale) {
+    cols <- rep("black", length(cols));
+  }
+  if(show==1){ # display sample name set on
+    text(lv1, lv2, label=text.lbls, pos=4, xpd=T, cex=0.75);
+    points(lv1, lv2, pch=pchs, col=cols);
+  }else{
+    if (length(uniq.cols) == 1) {
+      points(lv1, lv2, pch=pchs, col=cols, cex=1.0);
+    } else {
+      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+        points(lv1, lv2, pch=pchs, col=adjustcolor(cols, alpha.f = 0.4), cex=1.8);
+      }else{
+        points(lv1, lv2, pch=21, bg=adjustcolor(cols, alpha.f = 0.4), cex=2);
+      }
+    }
+  }
+  
+  uniq.pchs <- unique(pchs);
+  if(grey.scale) {
+    uniq.cols <- "black";
+  }
+  legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+  
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+#'3D SPLS-DA score plot
+#'@description Sparse PLS-DA (from mixOmics) 3D score plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
+#'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, inx3=3){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  spls3d <- list();
+  # need to check if only two components are generated
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$score$axis <- paste("Component", c(inx1, inx2), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2)], 1), "%)", sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2)], 5)));
+    spls3d$score$axis <- c(spls3d$score$axis, "Component3 (NA)");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2, inx3)], 1), "%)", sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2, inx3)], 5)));
+  }
+  colnames(coords) <- NULL; 
+  spls3d$score$xyz <- coords;
+  spls3d$score$name <- rownames(mSetObj$dataSet$norm);
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+  spls3d$score$facA <- cls;
+  
+  # now set color for each group
+  cols <- unique(GetColorSchema(mSetObj));
+  rgbcols <- col2rgb(cols);
+  cols <- apply(rgbcols, 2, function(x){paste("rgb(", paste(x, collapse=","), ")", sep="")})
+  spls3d$score$colors <- cols;
+  
+  imgName = paste(imgName, ".", format, sep="");
+  json.obj <- RJSONIO::toJSON(spls3d, .na='null');
+  sink(imgName);
+  cat(json.obj);
+  sink();
+  mSetObj$imgSet$spls.score3d <- imgName;
+  return(.set.mSet(mSetObj));
+}
+
+#'@export
+PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
+  mSetObj <- .get.mSet(mSetObj);
+  spls = mSetObj$analSet$splsr
+  spls3d <- list();
+
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$loading$axis <- paste("Loading ", c(inx1, inx2), sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2)], 5)));
+    spls3d$loading$axis <- c(spls3d$loading$axis, "Loading 3");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$loading$axis <- paste("Loading ", c(inx1, inx2, inx3), sep="");    
+    coords <- data.frame(t(signif(mSetObj$analSet$splsr$loadings$X[,c(inx1, inx2, inx3)], 5)));
+  }
+    
+    colnames(coords) <- NULL; 
+    spls3d$loading$xyz <- coords;
+    spls3d$loading$name <- rownames(spls$loadings$X);
+    spls3d$loading$entrez <-rownames(spls$loadings$X); 
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.character(sort(as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls])));
+  }else{
+    cls <- as.character(mSetObj$dataSet$cls);
+  }
+  
+  if(all.numeric(cls)){
+    cls <- paste("Group", cls);
+  }
+
+  spls3d$cls = cls;
+  # see if there is secondary
+  
+  require(RJSONIO);
+  imgName = paste(imgName, ".", format, sep="");
+  json.mat <- RJSONIO::toJSON(spls3d, .na='null');
+  sink(imgName);
+  cat(json.mat);
+  sink();
+  current.msg <<- "Annotated data is now ready for PCA 3D visualization!";
+
+  if(.on.public.web){
+    return(1);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
+
+}
+
+
+#'Create SPLS-DA loading plot
+#'@description Sparse PLS-DA (from mixOmics) loading plot
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param inx Input the model index
+#'@param viewOpt Detailed view "detail" 
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx, viewOpt="detail"){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  
+  imp.vec <- abs(mSetObj$analSet$splsr$loadings$X[,inx]);
+  imp.vec <- imp.vec[imp.vec > 0];
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+    
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  mSetObj$imgSet$spls.imp <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  PlotImpVar(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE);
+  dev.off();
+  
+  return(.set.mSet(mSetObj));
+}
+
+#'Create SPLS-DA classification plot
+#'@description Sparse PLS-DA (from mixOmics) plot of 
+#'classification performance using different components
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param validOpt "Mfold"
+#'@param format Select the image format, "png", or "pdf". 
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'@import caret
+PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+  
+  mSetObj <- .get.mSet(mSetObj);
+
+  res <- mSetObj$analSet$splsr$error.rate;
+  
+  edge <- (max(res)-min(res))/100; # expand y uplimit for text
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w*6/8;
+  
+  mSetObj$imgSet$splsda.class <- imgName;
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  plot(res, type='l', xlab='Number of Components', ylab='Error Rate',
+       ylim = c(min(res)-5*edge, max(res)+18*edge), axes=F,
+       main="Sparse PLS-DA Classification Error Rates")
+  text(res, labels = paste(100*round(res,3),'%'), adj=c(-0.3, -0.5), srt=45, xpd=T)
+  axis(2);
+  axis(1, 1:length(res), names(res));
+  dev.off();
+  return(.set.mSet(mSetObj));
+}
+
+##############################################
+##############################################
+########## Utilities for web-server ##########
+##############################################
+##############################################
+
+# get which number of components give best performance
+GetPLSBestTune<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$analSet$plsda$best.num)){
+    return(0);
+  }
+  mSetObj$analSet$plsda$best.num;
+}
+
+# obtain VIP score
+GetPLSSigMat<-function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "vip"){
+    return(CleanNumber(signif(as.matrix(mSetObj$analSet$plsda$vip.mat),5)));
+  }else if(type == "coef"){
+    return(CleanNumber(signif(as.matrix(mSetObj$analSet$plsda$coef.mat),5)));
+  }else{
+    return(CleanNumber(signif(as.matrix(mSetObj$analSet$plsr$imp.loads),5)));
+  }
+}
+
+GetPLSSigRowNames<-function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "vip"){
+    return(rownames(mSetObj$analSet$plsda$vip.mat));
+  }else if(type == "coef"){
+    return(rownames(mSetObj$analSet$plsda$coef.mat));
+  }else{
+    return(rownames(mSetObj$analSet$plsr$imp.loads))
+  }
+}
+
+GetPLSSigColNames<-function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "vip"){
+    return(colnames(mSetObj$analSet$plsda$vip.mat));
+  }else if(type == "coef"){
+    return(colnames(mSetObj$analSet$plsda$coef.mat));
+  }else{
+    return(colnames(mSetObj$analSet$plsr$imp.loads));
+  }
+}
+
+GetPLS_CVRowNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$plsda$fit.info);
+}
+
+GetPLS_CVColNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  colnames(mSetObj$analSet$plsda$fit.info);
+}
+
+GetPLS_CVMat<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(signif(mSetObj$analSet$plsda$fit.info, 5));
+}
+
+GetMaxPLSPairComp<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(min(dim(mSetObj$dataSet$norm)[1]-1, dim(mSetObj$dataSet$norm)[2]));
+}
+
+GetMaxPLSCVComp<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(min(dim(mSetObj$dataSet$norm)[1]-2, dim(mSetObj$dataSet$norm)[2]));
+}
+
+GetDefaultPLSPairComp<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(min(5, dim(mSetObj$dataSet$norm)[1]-1, dim(mSetObj$dataSet$norm)[2]));
+}
+
+GetDefaultPLSCVComp<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(min(5, dim(mSetObj$dataSet$norm)[1]-2, dim(mSetObj$dataSet$norm)[2], mSetObj$dataSet$min.grp.size));
+}
+
+GetPLSLoadAxesSpec<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$pls.axis.lims;
+}
+
+GetPLSLoadCmpds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  names(mSetObj$analSet$plsr$load.x.uniq);
+}
+
+GetPLSLoadCmpdInxs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$plsr$load.x.uniq;
+}
+
+GetPLSLoadMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.matrix(cbind(mSetObj$analSet$plsr$load.x.uniq, mSetObj$analSet$plsr$imp.loads[,2]));
+}
+
+GetPCALoadAxesSpec <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$pca.axis.lims;
+}
+
+GetPCALoadCmpds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  names(mSetObj$analSet$pca$load.x.uniq);
+}
+
+GetPCALoadCmpdInxs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$pca$load.x.uniq;
+}
+
+GetPCALoadMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.matrix(cbind(mSetObj$analSet$pca$load.x.uniq, mSetObj$analSet$pca$imp.loads[,2]));
+}
+
+#'For plotting PCA, selects max top 9 components
+#'@description Rotate PCA analysis
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'
+GetMaxPCAComp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(min(9, dim(mSetObj$dataSet$norm)-1));
+}
+
+GetOPLSLoadAxesSpec <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$oplsda$opls.axis.lims);
+}
+
+GetOPLSLoadCmpds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$oplsda$splot.mat);
+}
+
+GetOPLSLoadColNames <- function(mSetObj=NA){
+  return(c("p[1]","p(corr)[1]"));
+}
+
+GetOPLSLoadCmpdInxs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$oplsda$splot.mat[,1];
+}
+
+GetOPLSLoadMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.matrix(mSetObj$analSet$oplsda$splot.mat[,c(1,3)]);
+}
+
+GetDefaultSPLSCVComp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return (min(5, dim(mSetObj$dataSet$norm)[1]-2, dim(mSetObj$dataSet$norm)[2], mSetObj$dataSet$min.grp.size));
+}
+
+GetDefaultSPLSPairComp <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return (min(5, dim(mSetObj$dataSet$norm)[1]-1, dim(mSetObj$dataSet$norm)[2]));
+}
+
+GetSPLS_CVRowNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$splsda$fit.info);
+}
+
+GetSPLS_CVColNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  colnames(mSetObj$analSet$splsda$fit.info);
+}
+
+GetSPLS_CVMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(signif(mSetObj$analSet$splsda$fit.info, 5));
+}
+
+GetSPLSLoadAxesSpec <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$pls.axis.lims;
+}
+
+GetSPLSLoadCmpds <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  rownames(mSetObj$analSet$splsr$loadings$X);
+}
+
+GetSPLSLoadCmpdInxs <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$analSet$splsr$load.x.uniq;
+}
+
+GetSPLSLoadMat <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  as.matrix(signif(mSetObj$analSet$splsr$loadings$X, 5));
+}
+
+GetSPLSSigColNames <- function(mSetObj=NA, type){
+  mSetObj <- .get.mSet(mSetObj);
+  if(type == "vip"){
+    return (colnames(mSetObj$analSet$splsda$vip.mat));
+  }else if(type == "coef"){
+    return (colnames(mSetObj$analSet$splsda$coef.mat));
+  }else{
+    return (colnames(mSetObj$analSet$splsr$loadings$X));
+  }
+}
+
