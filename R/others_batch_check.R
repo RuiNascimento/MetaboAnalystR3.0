@@ -170,7 +170,7 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@importFrom plyr join ddply
 #'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
 #'@import edgeR
-#'@import pcaMethods
+#'@importFrom pcaMethods pca
 #'@import impute
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
