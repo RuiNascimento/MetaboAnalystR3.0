@@ -1,5 +1,5 @@
 ---
-title: "MetaboAnalystR 3 workflow: Towards Optimized Workflow for Global Metabolomics"
+title: "MetaboAnalystR 3: Towards Optimized Workflow for Global Metabolomics"
 author: "Zhiqiang Pang, Jasmine Chong and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
