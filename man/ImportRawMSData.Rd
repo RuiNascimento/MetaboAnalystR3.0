@@ -13,7 +13,7 @@ the raw MS spectra to be processed.}
 \item{mode}{Character, the data input mode. Default is "onDisk" to avoid memory crash. "inMemory" will 
 absorb data into the memory.}
 
-\item{plotSettings}{List, plotting parameters produced by plotSetting Function. "plot.opts" can be added through this 
+\item{plotSettings}{List, plotting parameters produced by SetPlotParam Function. "plot.opts" can be added through this 
 function for samples numbers for plotting. Defalut is "default", "all" will apply all samples for plotting and may cause 
 memory crash, especially for large sample dataset.}
 }
