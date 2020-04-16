@@ -146,7 +146,7 @@ MetaboAnalystR 2.0 has been developed by the [XiaLab](https://www.xialab.ca/) at
 
 We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
 
-Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR: Enhancing Key Steps for High-throughput Global Metabolomics".
+Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR: Towards Optimized Workflow for Global Metabolomics".
 
 Chong, Jasmine, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
 Metabolites 9.3 (2019): 57.
