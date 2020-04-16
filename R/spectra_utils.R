@@ -1541,9 +1541,9 @@ mSet2xcmsSet <- function(mSet) {
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'@export
-#'License: GNU GPL (>= 2)
 #'@ref Smith, C.A. et al. 2006. Analytical Chemistry, 78, 779-787
-#'
+#' Mcgill University
+#' License: GNU GPL (>= 2)
 updateRawSpectraParam <- function (Params){
   
   param <- list();
