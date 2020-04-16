@@ -8,7 +8,7 @@
 
 **MetaboAnalystR 3.0** contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst, thereby achieving maximum flexibility and reproducibility. 
 
-Besides, with version 3.0, we aim to optimize two important points for the whole pipeline. First, raw spectral processing parameters optimization. Second, we have enhanced the ability to correct batch effect by organising different algorithm. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multiomics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Enhanced Global Metabolomics Pipeline" vignette, available [here](https://bitbucket.org/ZhiqiangPang/metaboanalystr-3.0/src/master/MetaboAnalystR 3.0 Workflow: Optimized Pipeline for System Metabolomics.pdf) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
+Besides, with version 3.0, we aim to optimize two important points for the whole pipeline. First, raw spectral processing parameters optimization. Second, we have enhanced the ability to correct batch effect by organising different algorithm. In addition, more support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661), and a new pathway-based method to integrate multiomics data has been added. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Towards Optimized Workflow for Global Metabolomics" vignette, available [here](https://github.com/xia-lab/MetaboAnalystR3.0/blob/master/docs/MetaboAnalystR%203:%20Towards%20Optimized%20Workflow%20for%20Global%20Metabolomics.pdf) as a PDF. In this vignette, we perform end-to-end metabolomics data analysis on the full batch of clinical IBD samples.   
  
 
 ## Getting Started
@@ -142,7 +142,7 @@ browseVignettes("MetaboAnalystR")
 
 ## Citation
 
-MetaboAnalystR 2.0 has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. The original manuscript (Version 1.0.0) can be found [here](https://doi.org/10.1093/bioinformatics/bty528) and last version 2.0.0 is [here](https://www.mdpi.com/2218-1989/9/3/57)!
+MetaboAnalystR 3.0 has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. The original manuscript (Version 1) can be found [here](https://doi.org/10.1093/bioinformatics/bty528) and last version 2 is [here](https://www.mdpi.com/2218-1989/9/3/57).
 
 We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
 
