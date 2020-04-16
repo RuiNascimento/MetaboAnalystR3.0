@@ -5,7 +5,7 @@
 #' @import htmltools
 #' @import jsonlite
 #' @importFrom graphics layout
-#' @import tibble
+#' @importFrom tibble as_tibble
 #' @importFrom purrr transpose
 #' 
 
