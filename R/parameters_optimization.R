@@ -2,12 +2,13 @@
 #' @description This function is used to optimize the critical parameters of peak picking and alignment for 
 #' the following data processing. It utilizes the trimed data and the internal instrument-specific parameters.
 #' Parallel computing will be performed. The number of cores user want to use could be specified.
-#' @param raw_data MSnExp object, the (trimmed) data in memory produced by 'PerformDataTrimming'.
+#' @param raw_data MSnExp object, can be the (trimmed) data in memory produced by 'PerformDataTrimming' or the 
+#' orignal data read by ImportRawMSData with 'inMemory" mode.
 #' @param param List, Parameters defined by 'SetPeakParam' function.
-#' @param method Character, method of parameters optimization, including "DoE' and "OVAT". Default is "DoE". 
-#' "OVAT" is not currently available and will be tested and supported in future.
-#' @param ncore Numeric, core number used to perform the parallel based optimization. If thers is memory issue,
-#' please reduce the core used here. For default, all cores will be used.
+#' @param method Character, method of parameters optimization, including "DoE' only. Default is "DoE". Other method 
+#' is under development.
+#' @param ncore Numeric, CPU threads number used to perform the parallel based optimization. If thers is memory issue,
+#' please reduce the 'ncore' used here. For default, 2/3 CPU threads of total will be used.
 #' @export
 #' @import MSnbase
 #' @import progress
@@ -35,7 +36,7 @@ PerformParamsOptimization<-function(raw_data, param=p0, method="DoE", ncore=4){
     
   if (missing(ncore)){
     ncore<-detectCores();
-    message("'ncore' is absent, will use all cores avaliable!")
+    message("'ncore' is absent, will use 2/3 CPU threads of total!")
   };
   
   

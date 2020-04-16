@@ -145,7 +145,7 @@ ImportRawMSDataList <- function(dataset.meta, format = "png", dpi = 72, width = 
 #' the raw MS spectra to be processed.
 #' @param mode Character, the data input mode. Default is "onDisk" to avoid memory crash. "inMemory" will 
 #' absorb data into the memory.
-#' @param plotSettings List, plotting parameters produced by plotSetting Function. "plot.opts" can be added through this 
+#' @param plotSettings List, plotting parameters produced by SetPlotParam Function. "plot.opts" can be added through this 
 #' function for samples numbers for plotting. Defalut is "default", "all" will apply all samples for plotting and may cause 
 #' memory crash, especially for large sample dataset.
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
@@ -387,7 +387,7 @@ PlotEIC <- function(raw_data, rt_mn, rt_mx, mz_mn, mz_mx, aggreg = "sum",
 #' @param Params The object created using the SetPeakParam function, 
 #' containing user's specified or default parameters for downstream 
 #' raw MS data pre-processing.
-#' @param plotSettings List, plotting parameters produced by plotSetting Function.
+#' @param plotSettings List, plotting parameters produced by SetPlotParam Function.
 #' Defaut is set to true.
 #' @param ncore Numeric, used to define the cores' number for Peak Profiling.
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
@@ -446,7 +446,7 @@ PerformPeakProfiling <- function(rawData, Params, plotSettings, ncore){
   sample_idx <- mSet[["onDiskData"]]@phenoData@data[["sample_group"]];
   
   if (missing(plotSettings)){
-    plotSettings <- plotSetting(name_peal_in="Peak_Intensity",
+    plotSettings <- SetPlotParam(name_peal_in="Peak_Intensity",
                                 name_PCA="PCA",
                                 name_adj_RT="Adjusted_RT",
                                 name_adj_BPI="Adjusted_BPI")
@@ -699,12 +699,13 @@ PerformPeakProfiling <- function(rawData, Params, plotSettings, ncore){
 #' @param format Numeric, input the format of the image to create.
 #' @param dpi Numeric, input the dpi of the image to create.
 #' @param width Numeric, input the width of the image to create.
+#' @param ... Other specific parameters for specific function. Please set them according to the corresponding function.
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)
 #' @export
 
-plotSetting<-function(Plot = F, labels = TRUE, format = "png", dpi = 72, width = 9,...){
+SetPlotParam<-function(Plot = F, labels = TRUE, format = "png", dpi = 72, width = 9,...){
   
   return(list(Plot = Plot,
               labels = labels,
@@ -760,7 +761,7 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 #' @param annParams The object created using the SetAnnotationParam function, 
 #' containing user's specified or default parameters for downstream 
 #' raw MS data pre-processing.
-#' @author Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
+#' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jasmine Chong \email{jasmine.chong@mail.mcgill.ca},
 #' Mai Yamamoto \email{yamamoto.mai@mail.mcgill.ca}, and Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
 #' License: GNU GPL (>= 2)

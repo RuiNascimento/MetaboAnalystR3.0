@@ -20,6 +20,7 @@
   }
 }
 
+# Used to defined the parallel namespace for peak picking
 peak_function_list <- list("PerformPeakPicking",
                            "PeakPicking_centWave_slave",
                            "PerformPeakGrouping",
@@ -67,6 +68,7 @@ peak_function_list <- list("PerformPeakPicking",
                            
 )
 
+# Used to defined the parallel namespace for parameters optimization
 optimize_function_list <- c(list("PeakPicking_prep",
                                  "Statistic_doe",
                                  "SlaveCluster_doe",
