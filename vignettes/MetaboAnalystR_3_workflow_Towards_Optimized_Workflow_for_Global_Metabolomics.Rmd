@@ -77,9 +77,9 @@ PerformDataInspect(data_folder_QC,res = 50)
 ```
 
 ```{r echo=FALSE}
-cat("0020a_XAV_iHMP2_FFA_PREFA02.mzXML",
-'[1] "RT range is: 18.0985 and 1139.81 seconds !"',
-'[1] "MZ range is: 69.999908447266 and 849.902038574219 Thomson !"')
+cat('0020a_XAV_iHMP2_FFA_PREFA02.mzXML
+[1] "RT range is: 18.0985 and 1139.81 seconds !"
+[1] "MZ range is: 69.999908447266 and 849.902038574219 Thomson !"')
 ```
 
 ```{r echo=F, fig.width = 60}
@@ -298,12 +298,12 @@ maPeaks <- FormatPeakList(annotPeaks, annParams, filtIso =F, filtAdducts = FALSE
                           missPercent = 1)
 ```
 
-Part of the table (first 20 rows) are shown below.
+Part of the table (first 10 rows and 2 samples) are shown below.
 
 ```{r,echo=F}
-require(knitr);require(kableExtra)
-d<-kable(head(read.csv("vignette_figures/metaboanalyst_input.csv",header = T),20))
-scroll_box(d,width = "700px", height = "500px")
+library(knitr)
+d<-kable(head(read.csv("vignette_figures/metaboanalyst_input.csv",header = T),10)[,c(1:3)])
+d
 ```
 
 
@@ -349,7 +349,7 @@ Rserv started in daemon mode.
 
 ```{r,eval=F}
 # Second step is to read in the filtered peak list, please set the path right first
-mSet<-Read.TextData(mSet, "~/Documents/metaboanalyst_input.csv", "colu", "disc")
+mSet<-Read.TextData(mSet, "metaboanalyst_input.csv", "colu", "disc")
 
 ```
 
@@ -472,6 +472,14 @@ mSet <- PlotPLS.Imp(mSet, "pls_imp_0_", "png", 72, width=NA, "vip", "Comp. 1", 1
 knitr::include_graphics("vignette_figures/pls_score2d_0_dpi72.png",dpi = 120)
 ```
 
+```{r echo=FALSE, fig.width=20}
+knitr::include_graphics("vignette_figures/pls_imp_0_dpi72.png",dpi = 140)
+```
+
+
+
+
+### 2.3 From MS peaks to Pathways
 
 Perform T test for further MS peaks to pathway analysis
 ```{r, eval=FALSE}
@@ -484,19 +492,20 @@ mSet<-Ttests.Anal(mSet, F, 0.25, FALSE, TRUE)
 cat('[1] "A total of 1329 significant features were found."')
 ```
 
-### 2.3 From MS peaks to Pathways
+
 
 ```{r,eval=F}
 mSet<-Convert2Mummichog(mSet, rt=TRUE)
 mSet<-InitDataObjects("mass_all", "mummichog", FALSE)
 SetPeakFormat("mprt")
 mSet<-UpdateInstrumentParameters(mSet, 5, "negative");
-mSet<-Read.PeakListData(mSet, "mummichog_input_2020-04-14.txt");
+mSet<-Read.PeakListData(mSet, "mummichog_input_your_date.txt");
 mSet<-SanityCheckMummichogData(mSet)
-mSet<-SetPeakEnrichMethod(mSet, "mum", version="v2")
-mSet<-SetMummichogPval(mSet, 0.05)
+mSet<-SetPeakEnrichMethod(mSet, "integ", version="v2")
+# Please set the appropriate p value according to your data
+mSet<-SetMummichogPval(mSet, 0.15)
 mSet<-PerformPSEA(mSet, "hsa_mfn", "current", permNum = 100)
-mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_v1_optimied_new_", "png", 144, width=NA,num_annot = 5)
+mSet<-PlotIntegPaths(mSet, "peaks_to_paths_", "png", 144)
 
 ```
 
@@ -541,7 +550,7 @@ The following object is masked from package:base:
 ```
 
 ```{r echo=FALSE, fig.width=80}
-knitr::include_graphics("vignette_figures/peaks_to_paths_1_v1_optimied_new_dpi144.png",dpi = 180)
+knitr::include_graphics("vignette_figures/peaks_to_paths_dpi144.png",dpi = 240)
 ```
 
 
@@ -586,11 +595,13 @@ PerformDataInspect(data_folder_QC,res = 50)
 ```
 
 ```{r echo=FALSE}
-cat("0020a_XAV_iHMP2_FFA_PREFA02.mzXML","\n",'[1] "RT range is: 18.0985 and 1139.81 seconds !"',"\n",'[1] "MZ range is: 69.999908447266 and 849.902038574219 Thomson !"',"\n")
+cat('SA4.mzXML 
+[1] "RT range is: 0.306552 and 2400.35 seconds !"
+[1] "MZ range is: 99.999481201172 and 1499.99914550781 Thomson !"')
 ```
 
 ```{r echo=F, fig.width = 60}
-knitr::include_graphics("vignette_figures/datainspect.png")
+knitr::include_graphics("vignette_figures/data_inspect_TJ_ori.png",dpi = 100)
 ```
 
 ### 3.4 Remove An Extremly High-Intensity contaminant
@@ -628,6 +639,10 @@ Loading required package: RColorBrewer
 Chromatogram Plotting Begin...
 Data Trimming Finished !
 Time Spent In Total:7.8mins')
+```
+
+```{r echo=F, fig.width = 60}
+knitr::include_graphics("vignette_figures/datainspect.png",dpi = 120)
 ```
 
 ```{r echo=FALSE, fig.width=60}
