@@ -190,11 +190,11 @@ Time Spent In Total:25.1mins
 
 #### 2.1.7 Peak Profiling
 
-The *ImportRawMSData* function reads in raw MS data files and saves it as an OnDiskMSnExp object. Two plots can be output with *plotSetting* function set with "Plot = T" - the Total Ion Chromatogram (TIC) which provides an overview of the entire spectra, and the Base Peak Chromatogram (BPC) which is a cleaner profile of the spectra based on the most abundant signals. These plots are useful to inform the setting of parameters downstream. For users who wish to view a peak of interest, an Extracted Ion Chromatogram (EIC) can be generated using the *PlotEIC* function.
+The *ImportRawMSData* function reads in raw MS data files and saves it as an OnDiskMSnExp object. Two plots can be output with *SetPlotParam* function set with "Plot = T" - the Total Ion Chromatogram (TIC) which provides an overview of the entire spectra, and the Base Peak Chromatogram (BPC) which is a cleaner profile of the spectra based on the most abundant signals. These plots are useful to inform the setting of parameters downstream. For users who wish to view a peak of interest, an Extracted Ion Chromatogram (EIC) can be generated using the *PlotEIC* function.
 
 ```{r,echo=T, eval=FALSE}
-# Import raw MS data. The "plotsetting" parameters can be used to determine plot or not.
-rawData <- ImportRawMSData(data_folder_Sample,plotSettings = plotSetting(Plot=F))
+# Import raw MS data. The "SetPlotParam" parameters can be used to determine plot or not.
+rawData <- ImportRawMSData(data_folder_Sample,plotSettings = SetPlotParam(Plot=F))
 ```
 
 ```{r, echo=FALSE}
@@ -206,7 +206,7 @@ The *PerformPeakProfiling* function is an updated peak processing pipeline from 
 
 ```{r,echo=T, eval=FALSE}
 # Peak Profiling with optimized parameters
-mSet <- PerformPeakProfiling(rawData,param_optimized$best_parameters,plotSettings = plotSetting(Plot = T))
+mSet <- PerformPeakProfiling(rawData,param_optimized$best_parameters,plotSettings = SetPlotParam(Plot = T))
 
 ```
 
@@ -724,8 +724,8 @@ Time Spent In Total:26.5mins
 ### 3.7 Peak Profiling
 
 ```{r,echo=T, eval=FALSE}
-# Import raw MS data. The "plotsetting" parameters can be used to determine plot or not.
-rawData <- ImportRawMSData(data_folder_Sample,plotSettings = plotSetting(Plot=F))
+# Import raw MS data. The "SetPlotParam" parameters can be used to determine plot or not.
+rawData <- ImportRawMSData(data_folder_Sample,plotSettings = SetPlotParam(Plot=F))
 ```
 
 ```{r, echo=FALSE}
@@ -735,7 +735,7 @@ cat('[1] "The number of CPU cores to be used is set to 6."
 
 ```{r,echo=T, eval=FALSE}
 # Peak Profiling with optimized parameters
-mSet <- PerformPeakProfiling(rawData,param_optimized$best_parameters,plotSettings = plotSetting(Plot = F))
+mSet <- PerformPeakProfiling(rawData,param_optimized$best_parameters,plotSettings = SetPlotParam(Plot = F))
 
 ```
 
@@ -920,7 +920,7 @@ cat('[1] 754')
 #### 3.9.4 Identify the percentage of guassian peaks
 ```{r,eval=F, echo=T}
 # Read in full data set with "inMemory"
-object<-ImportRawMSData("~Data/full/", ncores = 8, mode = "inMemory",plotSettings = plotSetting(Plot = F))
+object<-ImportRawMSData("~Data/full/", ncores = 8, mode = "inMemory",plotSettings = SetPlotParam(Plot = F))
 # calculate the Gaussian peaks percentage
 calcGaussianS(mSet,object,useNoise = param_optimized$best_parameters$noise)
 ```
