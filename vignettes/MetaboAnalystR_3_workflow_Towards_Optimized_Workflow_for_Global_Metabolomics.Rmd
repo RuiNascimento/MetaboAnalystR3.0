@@ -4,18 +4,18 @@ author: "Zhiqiang Pang, Jasmine Chong and Jeff Xia"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{1. MetaboAnalystR 3 workflow}
+  %\VignetteIndexEntry{b). MetaboAnalystR 3 workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-### 1. Introduction of MetaboAnalystR 3.0
+## 1. Introduction of MetaboAnalystR 3.0
 
 **MetaboAnalystR 3.0** is aimed to optimize three important points for the whole pipeline. First, raw spectral processing parameters optimization. Second, we have enhanced the ability to correct batch effect by organising different algorithm. In addition, strengthened support for functional interpretation directly from m/z peaks via mummichog2 (PMID: 23861661) by integrating RT to refine the grouping of signals. To demonstrate this new functionality, we provide the "MetaboAnalystR 3.0 Workflow: Enhanced Global Metabolomics Analysis" vignette here. 
 
 In this vignette, we are going to perform end-to-end metabolomics data analysis on (Case 1) example samples of clinical IBD samples from <https://www.ibdmdb.org/> and (Case 2) standards' mixture (PMID: 29907290). Case 1 is series facel samples from IBD (including CD and UC) and nonIBD controls. Case 2 is a dataset comprimised of 1100 standard compounds under the detection of UPLC-Q/E.
 
-### 2. Case Study 1
+## 2. Case Study 1
 Inflammatory bowel diseases, which include Crohn’s disease and ulcerative colitis, have affected several million individuals around the world. Jason L. et al. have performed a longtitude multiomics study on the role of microbiome in the pathogenesis of IBD. Metabolomics study on the facal samples is introduced here for example case study of this novel parameters optimization pipeline.
 
 ### 2.1 Raw Data Processing
@@ -374,6 +374,8 @@ cat('[1] "Successfully passed sanity check!"
 [10] "Or click <b>Missing value imputation</b> to use other methods"')
 ```
 
+##### Data checking and Pre-processing
+
 ```{r,eval=F}
 # Perform data processing - Minimum Value Replacing
 mSet<-ReplaceMin(mSet);
@@ -391,7 +393,6 @@ cat('[1] " Further feature filtering based on Interquantile Range Reduced to 500
 [1] " Further feature filtering based on Interquantile Range Reduced to 5000 features based on Interquantile Range"')
 ```
 
-
 ```{r,eval=F}
 mSet <- PlotNormSummary(mSet, "norm_0_", "png", 72, width=NA)
 mSet <- PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
@@ -400,7 +401,6 @@ mSet <- PlotSampleNormSummary(mSet, "snorm_0_", "png", 72, width=NA)
 ```{r echo=FALSE, fig.width=60}
 knitr::include_graphics("vignette_figures/norm_0_dpi72.png",dpi = 120)
 ```
-
 
 ```{r,eval=F}
 # The fourth step is to perform fold-change analysis
@@ -411,6 +411,8 @@ mSet <- PlotFC(mSet, "fc_0_", "png", 72, width=NA)
 ```{r echo=FALSE, fig.width=60}
 knitr::include_graphics("vignette_figures/fc_0_dpi72.png",dpi = 120)
 ```
+
+##### Univariate Analysis - t test
 
 ```{r,eval=F}
 # The fifth step is to perform t-test analysis
@@ -426,6 +428,7 @@ knitr::include_graphics("vignette_figures/tt_0_dpi72.png",dpi = 120)
 cat('[1] "A total of 218 significant features were found."')
 ```
 
+##### Multivariate Analysis - PCA
 
 ```{r,eval=F}
 # The sixth step is to perform PCA
@@ -450,7 +453,7 @@ knitr::include_graphics("vignette_figures/pca_score3d_0_dpi72.png",dpi = 120)
 cat('[1] "The Interactive 3D PCA plot has been created, please find it in mSet$imgSet$pca.3d."')
 ```
 
-
+##### Multivariate Analysis - PLS-DA
 
 ```{r,eval=F}
 # The seventh step is to perform PLS-DA
@@ -470,8 +473,6 @@ knitr::include_graphics("vignette_figures/pls_score2d_0_dpi72.png",dpi = 120)
 ```
 
 
-
-
 Perform T test for further MS peaks to pathway analysis
 ```{r, eval=FALSE}
 # Perform t-test
@@ -483,27 +484,21 @@ mSet<-Ttests.Anal(mSet, F, 0.25, FALSE, TRUE)
 cat('[1] "A total of 1329 significant features were found."')
 ```
 
-
-
-
 ### 2.3 From MS peaks to Pathways
 
 ```{r,eval=F}
 mSet<-Convert2Mummichog(mSet, rt=TRUE)
-
 mSet<-InitDataObjects("mass_all", "mummichog", FALSE)
 SetPeakFormat("mprt")
 mSet<-UpdateInstrumentParameters(mSet, 5, "negative");
 mSet<-Read.PeakListData(mSet, "mummichog_input_2020-04-14.txt");
 mSet<-SanityCheckMummichogData(mSet)
-
 mSet<-SetPeakEnrichMethod(mSet, "mum", version="v2")
 mSet<-SetMummichogPval(mSet, 0.05)
 mSet<-PerformPSEA(mSet, "hsa_mfn", "current", permNum = 100)
 mSet<-PlotPeaks2Paths(mSet, "peaks_to_paths_1_v1_optimied_new_", "png", 144, width=NA,num_annot = 5)
 
 ```
-
 
 ```{r,echo=F}
 cat('
@@ -546,17 +541,17 @@ The following object is masked from package:base:
 ```
 
 ```{r echo=FALSE, fig.width=80}
-knitr::include_graphics("vignette_figures/peaks_to_paths_1_v1_optimied_new_dpi144.png")
+knitr::include_graphics("vignette_figures/peaks_to_paths_1_v1_optimied_new_dpi144.png",dpi = 180)
 ```
 
 
 
 ## 3. Case Study 2
-
 The SM dataset produced by HPLC-Q/E HF system, consists of 2 samples with 5 replicates for each sample as described by [Li et al. 2018](https://www.ncbi.nlm.nih.gov/pubmed/29907290). The original data can be downloaded from the link provided by authors in the article.
 
 
-#### 3.1 Load MetaboAnalystR 3.0
+### 3.1 Load MetaboAnalystR 3.0
+Library *MetaboAnalystR* package.
 
 ```{r,eval=FALSE}
 # Load the MetaboAnalystR package
@@ -564,9 +559,9 @@ library("MetaboAnalystR")
 
 ```
 
-#### 3.2 Data downloading
+### 3.2 Data downloading
 
-```{r, eval=FALSE, message=TRUE, include=FALSE}
+```{r, eval=FALSE}
 # Use Google API for data downloading here. Please "install.packages('googledrive')" and "install.packages('httpuv')"first.
 library(googledrive);
 temp <- tempfile(fileext = ".zip")
@@ -581,11 +576,7 @@ out
 
 ```
 
-
-
-
-
-#### 3.3 Data Inspectation
+### 3.3 Data Inspectation
 
 Before running the data analysis, we can inspect the data at first. 
 
@@ -602,15 +593,13 @@ cat("0020a_XAV_iHMP2_FFA_PREFA02.mzXML","\n",'[1] "RT range is: 18.0985 and 1139
 knitr::include_graphics("vignette_figures/datainspect.png")
 ```
 
-
-#### 3.4 Remove An Extremly High-Intensity contaminant
+### 3.4 Remove An Extremly High-Intensity contaminant
 Obviously, there are a series extremly high intensity peaks with mz 157.035, 158.035 and 159.035. According to experiment procedure, we can easily know the peaks are generated by DMSO, the solevent used as a stock solution. In this case, if we optimize the parameters blindly, the parameters will be dominated by this contaminants. Therefore, in order to obtain an unbiased efficacy, we 'd better to remove them at beginning.
 
 ```{r,echo=T,eval=F}
 # This step is used to remove the high-intensity contaminant - DMSO [2*M+H] and its isotopes
 raw_data1<-PerformDataTrimming("/home/xialab/MetaboAnalystR 3.0/Benchmark_results_new_pipeline/TJ/Data/train/",mode = "mz_specific",mz=c(seq(-157.020,-157.040,-0.0001),seq(-158.020,-158.040,-0.0001),seq(-159.020,-159.040,-0.0001)),mzdiff = 200,write = T)
 ```
-
 
 ```{r,eval=F}
 # This step is used to run the data trimming with "ssm" strategy
@@ -645,7 +634,7 @@ Time Spent In Total:7.8mins')
 knitr::include_graphics("vignette_figures/trimmed_TIC_2.png")
 ```
 
-#### 3.5 Initalize Parameters' Setting
+### 3.5 Initalize Parameters' Setting
 
 ```{r, echo=TRUE,eval=F}
 # Initial platform specific parameters
@@ -654,7 +643,7 @@ param_initial <- SetPeakParam(platform = "UPLC-Q/E")
 ```
 
 
-#### 3.6 Parameters' Optimization
+### 3.6 Parameters' Optimization
 
 ```{r, echo=T, eval=FALSE}
 # Select relative core according to your work platform
@@ -717,7 +706,7 @@ Time Spent In Total:26.5mins
 ```
 
 
-#### 3.7 Peak Prifiling
+### 3.7 Peak Profiling
 
 ```{r,echo=T, eval=FALSE}
 # Import raw MS data. The "plotsetting" parameters can be used to determine plot or not.
@@ -728,7 +717,6 @@ rawData <- ImportRawMSData(data_folder_Sample,plotSettings = plotSetting(Plot=F)
 cat('[1] "The number of CPU cores to be used is set to 6."
 [1] "Successfully imported raw MS data!"')
 ```
-
 
 ```{r,echo=T, eval=FALSE}
 # Peak Profiling with optimized parameters
@@ -772,8 +760,7 @@ Requesting 6306 peaks from SB5.mzXML ... got 4570.
 [1] "Peak picking finished successfully !"')
 ```
 
-
-#### 3.8 Peak Annotation
+### 3.8 Peak Annotation
 
 ```{r,echo=T, eval=FALSE}
 # Setting the Annotation Parameters.
@@ -784,7 +771,6 @@ annParams <- SetAnnotationParam(polarity = "positive", mz_abs_add = 0.005)
 # Perform peak annotation.
 annotPeaks <- PerformPeakAnnotation(mSet, annParams)
 ```
-
 
 ```{r,echo=F}
 cat('[1] "Start grouping after retention time."
@@ -832,22 +818,22 @@ maPeaks <- FormatPeakList(annotPeaks, annParams, filtIso =F, filtAdducts = FALSE
 ```
 
 
-#### 3.9 Peak Matching To Targeted Data Results
+### 3.9 Peak Matching To Targeted Data Results
 Here, we are going to run the statistics step by step to repeat the results in thte Table 1 in MetaboAnalystR 3.0 article
 
-##### 3.9.1 Total Peaks Counts
+#### 3.9.1 Total Peaks Counts
 ```{r, eval=F, echo=T}
 ## Read in the annotated Peak list produced by the pipeline above
 mset.data<-read.csv("annotated_peaklist.csv",header = T)
 
 nrow(mset.data)
 ```
+
 ```{r,echo=F}
 cat('[1] 18043')
 ```
 
-
-##### 3.9.2 True Peaks Identification
+#### 3.9.2 True Peaks Identification
 
 ```{r, eval=F, echo=T}
 # Read in the standards targetted metabolomics data table from the supplementary materials
@@ -876,7 +862,7 @@ length(unique(p))
 cat('[1] 799')
 ```
 
-##### 3.9.3 Peaks with consistant quantification 
+#### 3.9.3 Peaks with consistant quantification 
 ```{r,eval=F, echo=T}
 # Here we are running the statistics on the counts of compounds with consistent quantification
 a1<-lapply(p0, FUN=function(x){which(x==p)})
@@ -916,7 +902,7 @@ length(which(abs(data.identified$V21-data.identified$Fold.change)<1))
 cat('[1] 754')
 ```
 
-##### 3.9.4 Identify the percentage of guassian peaks
+#### 3.9.4 Identify the percentage of guassian peaks
 ```{r,eval=F, echo=T}
 # Read in full data set with "inMemory"
 object<-ImportRawMSData("~Data/full/", ncores = 8, mode = "inMemory",plotSettings = plotSetting(Plot = F))
@@ -924,13 +910,9 @@ object<-ImportRawMSData("~Data/full/", ncores = 8, mode = "inMemory",plotSetting
 calcGaussianS(mSet,object,useNoise = param_optimized$best_parameters$noise)
 ```
 
-
 ```{r,echo=F}
 cat('[1] 0.644')
 ```
-
-
-
 
 
 
