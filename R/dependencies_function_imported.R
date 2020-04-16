@@ -6,7 +6,7 @@
 #' @import jsonlite
 #' @import graphics
 #' @import tibble
-#' @import purrr
+#' @importFrom purrr transpose
 #' 
 
 # (1). Add_markers & add_data

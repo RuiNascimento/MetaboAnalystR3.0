@@ -167,8 +167,8 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@param center The center point of the batch effect correction, based on "QC" or ""."" means correct 
 #'to minimize the distance between batches.
 #'@import data.table
-#'@import plyr
-#'@import dplyr
+#'@importFrom plyr join ddply
+#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
 #'@import edgeR
 #'@import pcaMethods
 #'@import impute
