@@ -4,7 +4,7 @@
 #' @references Sievert C (2020). Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC. ISBN 9781138331457, https://plotly-r.com.
 #' @import htmltools
 #' @import jsonlite
-#' @import graphics
+#' @importFrom graphics layout
 #' @import tibble
 #' @importFrom purrr transpose
 #' 

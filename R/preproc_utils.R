@@ -767,8 +767,8 @@ SetAnnotationParam <- function(polarity = "positive", perc_fwhm = 0.6, mz_abs_is
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import MSnbase
-#' @import graph
-#' @import RBGL
+#' @importFrom graph ftM2graphNEL
+#' @importFrom RBGL highlyConnSG
 #' @references Kuhl C, Tautenhahn R, Boettcher C, Larson TR, Neumann S (2012). 
 #' "CAMERA: an integrated strategy for compound spectra extraction and annotation of 
 #' liquid chromatography/mass spectrometry data sets." Analytical Chemistry, 84, 283-289. 
