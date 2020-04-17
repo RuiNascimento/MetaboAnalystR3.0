@@ -842,15 +842,15 @@ QC_RLSC<-function(data,batch,class,order,QCs){
     intPredict <- as.data.frame(intPredict)
     
   }else{
-    suppressMessages(require(BiocParallel))
-    intPredict <- BiocParallel::bplapply(unique(qcData$ID_batch),
-                                         MetaboAnalystR:::.runFit2,
-                                         qcData=qcData,
-                                         maxOrder=maxOrder,
-                                         BPPARAM = BiocParallel::bpparam())
+    #suppressMessages(require(BiocParallel))
+    #intPredict <- BiocParallel::bplapply(unique(qcData$ID_batch),
+    #                                     MetaboAnalystR:::.runFit2,
+    #                                     qcData=qcData,
+    #                                     maxOrder=maxOrder,
+    #                                     BPPARAM = BiocParallel::bpparam())
     
-    #intPredict <- lapply(unique(qcData$ID_batch),.runFit2,
-    #                     qcData=qcData,maxOrder=maxOrder)
+    intPredict <- lapply(unique(qcData$ID_batch),.runFit2,
+                         qcData=qcData,maxOrder=maxOrder)
     
     intPredict <- data.table::rbindlist(intPredict)
     intPredict <- as.data.frame(intPredict)
