@@ -173,6 +173,7 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@importFrom pcaMethods pca
 #'@import impute
 #'@import data.table
+#'@import BiocParallel
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
