@@ -167,8 +167,8 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@param center The center point of the batch effect correction, based on "QC" or ""."" means correct 
 #'to minimize the distance between batches.
 #'@import data.table
-#'@importFrom plyr join ddply . summarise
-#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups id
+#'@importFrom plyr join ddply . summarise id
+#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
 #'@import edgeR
 #'@importFrom pcaMethods pca
 #'@import impute
@@ -874,35 +874,35 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   peaksData<-suppressMessages(.imputation(peaksData))
   ## For each batch
   ## CV plot
-  cvStat <- ddply(peaksData[is.na(peaksData$class),],.(ID,batch),
-                  summarise,
-                  rawCV=sd(value,na.rm = TRUE)/mean(value,na.rm = TRUE),
-                  normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
+  cvStat <- plyr::ddply(peaksData[is.na(peaksData$class),],plyr::.(ID,batch),
+                        plyr::summarise,
+                        rawCV=sd(value,na.rm = TRUE)/mean(value,na.rm = TRUE),
+                        normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
   
   
-  cvStatForEachBatch <- melt(cvStat,id.vars = c("ID","batch"),
+  cvStatForEachBatch <- reshape2::melt(cvStat,id.vars = c("ID","batch"),
                              variable.name = "CV")
   cvStatForEachBatch$batch <- as.factor(cvStatForEachBatch$batch)
   
   #message("Summary information of the CV for QC samples:")
-  cvTable <- ddply(cvStatForEachBatch,.(batch,CV),summarise,
+  cvTable <- plyr::ddply(cvStatForEachBatch,plyr::.(batch,CV),plyr::summarise,
                    lessThan30=sum(value<=0.3,na.rm = TRUE),
                    total=length(value),ratio=lessThan30/total)
   #print(cvTable)
   #res$cvBatch <- cvTable
   #message("\n")
   
-  cvStat <- ddply(peaksData[is.na(peaksData$class),],.(ID),
-                  summarise,
+  cvStat <- plyr::ddply(peaksData[is.na(peaksData$class),],plyr::.(ID),
+                        plyr::summarise,
                   rawCV=sd(value,na.rm = TRUE)/mean(value,na.rm = TRUE),
                   normCV=sd(valueNorm,na.rm = TRUE)/mean(valueNorm,na.rm = TRUE))
   
   
-  cvStatForAll <- melt(cvStat,id.vars = c("ID"),
+  cvStatForAll <- reshape2::melt(cvStat,id.vars = c("ID"),
                        variable.name = "CV")
   ## output information
   #message("Summary information of the CV for QC samples:")
-  cvTable <- ddply(cvStatForAll,.(CV),summarise,
+  cvTable <- plyr::ddply(cvStatForAll,plyr::.(CV),plyr::summarise,
                    lessThan30=sum(value<=0.3,na.rm = TRUE),
                    total=length(value),ratio=lessThan30/total)
   #print(cvTable)
@@ -3573,7 +3573,7 @@ spread <- function(data, key, value, fill = NA, convert = FALSE,
   value_var <- tidyselect::vars_pull(names(data), !! dplyr::enquo(value))
   
   col <- data[key_var]
-  col_id <- dplyr::id(col, drop = drop)
+  col_id <- plyr::id(col, drop = drop)
   col_labels <- split_labels(col, col_id, drop = drop)
   
   rows <- data[setdiff(names(data), c(key_var, value_var))]
@@ -3582,12 +3582,12 @@ spread <- function(data, key, value, fill = NA, convert = FALSE,
     row_id <- structure(1L, n = 1L)
     row_labels <- as.data.frame(matrix(nrow = 1, ncol = 0))
   } else {
-    row_id <- dplyr::id(rows, drop = drop)
+    row_id <- plyr::id(rows, drop = drop)
     row_labels <- split_labels(rows, row_id, drop = drop)
     rownames(row_labels) <- NULL
   }
   
-  overall <- dplyr::id(list(col_id, row_id), drop = FALSE)
+  overall <- plyr::id(list(col_id, row_id), drop = FALSE)
   n <- attr(overall, "n")
   # Check that each output value occurs in unique location
   if (anyDuplicated(overall)) {
