@@ -2324,13 +2324,13 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
   },
   error=function(e){
     #message("Please see the file: runFit_error.rda for related data!")
-    save(e,id,qcData,maxOrder,file="runFit_error.rda")
+    #save(e,id,qcData,maxOrder,file="runFit_error.rda")
     stop("error in runFit!")
     return(NULL)
   },
   warning=function(cond){
     #message("Please see the file: runFit_warning.rda for related data!")
-    save(cond,id,qcData,maxOrder,file="runFit_warning.rda")
+    #save(cond,id,qcData,maxOrder,file="runFit_warning.rda")
     return(NULL)
   })
   return(out)
