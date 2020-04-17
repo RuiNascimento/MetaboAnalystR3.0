@@ -848,6 +848,7 @@ QC_RLSC<-function(data,batch,class,order,QCs){
                                          MetaboAnalystR:::.runFit2,
                                          qcData=qcData,
                                          maxOrder=maxOrder,
+                                         loessSpan =loessSpan,
                                          BPPARAM = BiocParallel::bpparam())
     
     #intPredict <- lapply(unique(qcData$ID_batch),MetaboAnalystR:::.runFit2,
@@ -2319,7 +2320,7 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
   return(out)
 }
 
-.runFit2=function(id,qcData,maxOrder){
+.runFit2=function(id,qcData,maxOrder,loessSpan){
   #out <- tryCatch({
     dat <- data.frame(newOrder=1:maxOrder)
     
