@@ -841,8 +841,8 @@ QC_RLSC<-function(data,batch,class,order,QCs){
     
   }else{
     
-    intPredict <- bplapply(unique(qcData$ID_batch),.runFit2,
-                         qcData=qcData,maxOrder=maxOrder,BPPARAM = bpparam())
+    intPredict <- BiocParallel::bplapply(unique(qcData$ID_batch),.runFit2,
+                         qcData=qcData,maxOrder=maxOrder,BPPARAM = BiocParallel::bpparam())
     intPredict <- data.table::rbindlist(intPredict)
     intPredict <- as.data.frame(intPredict)
     
