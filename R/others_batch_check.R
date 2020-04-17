@@ -167,11 +167,12 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@param center The center point of the batch effect correction, based on "QC" or ""."" means correct 
 #'to minimize the distance between batches.
 #'@import data.table
-#'@importFrom plyr join ddply
-#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
+#'@importFrom plyr join ddply . summarise
+#'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups id
 #'@import edgeR
 #'@importFrom pcaMethods pca
 #'@import impute
+#'@import data.table
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -180,7 +181,7 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
   
   mSetObj <- .get.mSet(mSetObj);
-  start <<- Sys.time()
+  start.time <- Sys.time()
   if (is.null(Method)){
     Method<-"Automatically"
   }
@@ -374,7 +375,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     return("T");
   }
   
-  end <<- Sys.time()
+  end.time <- Sys.time()
   return(.set.mSet(mSetObj));
 }
 
@@ -826,7 +827,7 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   samList<-data.frame(sample=rownames(data),batch=batch,
                       class=class,order=unique(order))
   
-  maxOrder<-max(samList$order); loessDegree <- 2; loessSpan <- 0
+  maxOrder<-max(samList$order); loessDegree <- 2; loessSpan <- 0.5
   qcData$ID_batch <- paste(qcData$ID,qcData$batch,sep="_")
   
   if(loessSpan==0){
@@ -839,9 +840,9 @@ QC_RLSC<-function(data,batch,class,order,QCs){
     
   }else{
     
-    intPredict <- lapply(unique(qcData$ID_batch),.runFit2,
-                         qcData=qcData,maxOrder=maxOrder)
-    intPredict <- rbindlist(intPredict)
+    intPredict <- bplapply(unique(qcData$ID_batch),.runFit2,
+                         qcData=qcData,maxOrder=maxOrder,BPPARAM = bpparam())
+    intPredict <- data.table::rbindlist(intPredict)
     intPredict <- as.data.frame(intPredict)
     
   }
@@ -856,7 +857,7 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   peaksData <- plyr::join(peaksData,intPredict,
                           by=intersect(names(peaksData),names(intPredict)))
   #require(plyr)
-  mpa <- plyr::ddply(peaksData,.(ID),summarise,mpa=median(value,na.rm = TRUE))
+  mpa <- plyr::ddply(peaksData,plyr::.(ID),plyr::summarise,mpa=median(value,na.rm = TRUE))
   peaksData <- plyr::join(peaksData,mpa,
                           by=intersect(names(peaksData),names(mpa)))
   peaksData <- dplyr::mutate(peaksData,valuePredict=valuePredict/mpa)
@@ -3572,7 +3573,7 @@ spread <- function(data, key, value, fill = NA, convert = FALSE,
   value_var <- tidyselect::vars_pull(names(data), !! dplyr::enquo(value))
   
   col <- data[key_var]
-  col_id <- id(col, drop = drop)
+  col_id <- dplyr::id(col, drop = drop)
   col_labels <- split_labels(col, col_id, drop = drop)
   
   rows <- data[setdiff(names(data), c(key_var, value_var))]
@@ -3581,12 +3582,12 @@ spread <- function(data, key, value, fill = NA, convert = FALSE,
     row_id <- structure(1L, n = 1L)
     row_labels <- as.data.frame(matrix(nrow = 1, ncol = 0))
   } else {
-    row_id <- id(rows, drop = drop)
+    row_id <- dplyr::id(rows, drop = drop)
     row_labels <- split_labels(rows, row_id, drop = drop)
     rownames(row_labels) <- NULL
   }
   
-  overall <- id(list(col_id, row_id), drop = FALSE)
+  overall <- dplyr::id(list(col_id, row_id), drop = FALSE)
   n <- attr(overall, "n")
   # Check that each output value occurs in unique location
   if (anyDuplicated(overall)) {
