@@ -44,7 +44,7 @@ data_folder_QC <- "~/QC_IBD"
 # Use Google API for data downloading here. 
 # Please "install.packages('googledrive')" and "install.packages('httpuv')"first.
 library(googledrive);
-temp <- Ttempfile(fileext = ".zip")
+temp <- tempfile(fileext = ".zip")
 # Please authorize your google account to access the data
 dl <- drive_download(
   as_id("10DBpPEWy2cZyXvmlLOIfpwqQYwFplKYK"), path = temp, overwrite = TRUE)
