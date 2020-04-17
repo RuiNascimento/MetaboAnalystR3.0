@@ -169,7 +169,8 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
+#'@param style Numeric, the ratio style of the figure (width/height), defalt is 1, 1:1. 2 means 4:3, while 3 means 16:9.
 #'@param pcx Specify the principal component on the x-axis
 #'@param pcy Specify the principal component on the y-axis
 #'@param reg Numeric, input a number between 0 and 1, 0.95 will display the 95 percent confidence regions, and 0 will not.
@@ -180,7 +181,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
+PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, style=1, pcx, pcy, reg = 0.95, show=1, grey.scale = 0){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -198,7 +199,14 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
   }else{
     w <- width;
   }
-  h <- w;
+  
+  if (style==2){
+    h <- w*3/4;
+  } else if (style ==3){
+    h <- w*9/16;
+  } else {
+    h <- w
+  }
   
   mSetObj$imgSet$pca.score2d <- imgName;
   
@@ -280,13 +288,13 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
     if(grey.scale) {
       uniq.cols <- "black";
     }
-
+    
     if(length(lvs) < 6){
-        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
+      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols);
     }else if (length(lvs) < 10){
-        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
+      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.75);
     }else{
-        legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
+      legend("topright", legend = legend.nm, pch=uniq.pchs, col=uniq.cols, cex=0.5);
     }
     
   }else{
