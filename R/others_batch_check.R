@@ -842,7 +842,7 @@ QC_RLSC<-function(data,batch,class,order,QCs){
     intPredict <- as.data.frame(intPredict)
     
   }else{
-    
+    suppressMessages(require(BiocParallel))
     intPredict <- BiocParallel::bplapply(unique(qcData$ID_batch),
                                          MetaboAnalystR:::.runFit2,
                                          qcData=qcData,
