@@ -174,6 +174,7 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@import impute
 #'@import data.table
 #'@import BiocParallel
+#'@import crmn
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -843,14 +844,14 @@ QC_RLSC<-function(data,batch,class,order,QCs){
     
   }else{
     #suppressMessages(require(BiocParallel))
-    #intPredict <- BiocParallel::bplapply(unique(qcData$ID_batch),
-    #                                     MetaboAnalystR:::.runFit2,
-    #                                     qcData=qcData,
-    #                                     maxOrder=maxOrder,
-    #                                     BPPARAM = BiocParallel::bpparam())
+    intPredict <- BiocParallel::bplapply(unique(qcData$ID_batch),
+                                         MetaboAnalystR:::.runFit2,
+                                         qcData=qcData,
+                                         maxOrder=maxOrder,
+                                         BPPARAM = BiocParallel::bpparam())
     
-    intPredict <- lapply(unique(qcData$ID_batch),.runFit2,
-                         qcData=qcData,maxOrder=maxOrder)
+    #intPredict <- lapply(unique(qcData$ID_batch),MetaboAnalystR:::.runFit2,
+    #                     qcData=qcData,maxOrder=maxOrder)
     
     intPredict <- data.table::rbindlist(intPredict)
     intPredict <- as.data.frame(intPredict)
@@ -2319,7 +2320,7 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
 }
 
 .runFit2=function(id,qcData,maxOrder){
-  out <- tryCatch({
+  #out <- tryCatch({
     dat <- data.frame(newOrder=1:maxOrder)
     
     piece <- qcData[ qcData$ID_batch==id,]
@@ -2330,19 +2331,19 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
     dat$ID <- piece$ID[1]
     dat$batch <- piece$batch[1]
     dat
-  },
-  error=function(e){
+ # },
+  #error=function(e){
     #message("Please see the file: runFit_error.rda for related data!")
     #save(e,id,qcData,maxOrder,file="runFit_error.rda")
-    stop("error in runFit!")
-    return(NULL)
-  },
-  warning=function(cond){
+  #  stop("error in runFit!")
+  #  return(NULL)
+  #},
+ # warning=function(cond){
     #message("Please see the file: runFit_warning.rda for related data!")
     #save(cond,id,qcData,maxOrder,file="runFit_warning.rda")
-    return(NULL)
-  })
-  return(out)
+ #   return(NULL)
+  #})
+ # return(out)
 }
 
 .glogfit=function (x, a = 1, inverse = FALSE) {
