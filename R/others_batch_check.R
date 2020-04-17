@@ -318,7 +318,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
     
   } else if (Method=="QC_RLSC"){
     
-    QC_RLSC_edata<-suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs));
+    QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
     mSetObj$dataSet$adjusted.mat <- QC_RLSC_edata;
     
   } else if (Method=="ANCOVA"){
@@ -881,7 +881,7 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   peaksData$valueNorm[peaksData$valueNorm<=0] <- NA
   
   ## Value imputation
-  peaksData<-suppressMessages(.imputation(peaksData))
+  peaksData<-suppressMessages(MetaboAnalystR:::.imputation(peaksData))
   ## For each batch
   ## CV plot
   cvStat <- plyr::ddply(peaksData[is.na(peaksData$class),],plyr::.(ID,batch),
@@ -925,10 +925,10 @@ QC_RLSC<-function(data,batch,class,order,QCs){
   tmpPeaksData <- merge(peaksData,cvStat,by="ID")
   
   if(nrow(tmpPeaksData)!=nrow(peaksData)){
-    error_file <- paste(para@outdir,"/",para@prefix,"-doQCRLSC-error.rda",
-                        sep="")
+    #error_file <- paste(para@outdir,"/",para@prefix,"-doQCRLSC-error.rda",
+    #                    sep="")
     #message("Please see the file: ",error_file," for detail!")
-    save(peaksData,cvStat,file=error_file)
+    #save(peaksData,cvStat,file=error_file)
     stop("Please see detailed data in ",error_file)
   }
   peaksData <- tmpPeaksData
@@ -2422,7 +2422,7 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
     ## An expression matrix with genes in the rows, samples in the columns
     ## This method is very fast.
     #require(impute)
-    mvd <- impute.knn(t(x))
+    mvd <- impute::impute.knn(t(x))
     inputedData <- t(mvd$data)
   }else if(method == "softImpute"){
     # https://cran.r-project.org/web/packages/softImpute/vignettes/softImpute.html
