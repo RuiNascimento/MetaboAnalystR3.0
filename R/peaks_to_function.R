@@ -2265,7 +2265,7 @@ PlotIntegPaths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width 
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import ggplot2
-#' @import reshape2
+#' @importFrom reshape2 melt
 #' @import scales
 
 PlotPathwayMZHits <- function(mSetObj=NA, msetNM, format="png", dpi=300, width=10){
