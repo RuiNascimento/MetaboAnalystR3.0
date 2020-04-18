@@ -402,7 +402,7 @@ optimizxcms.doe.peakpicking <- function(object = NULL, params = params,
 #' @param BPPARAM MulticoreParam method, used to set the parallel method. Default is bpparam().
 #' @param nSlave Numeric, core number used to perform the parallel based optimization.
 #' @import MSnbase
-#' @import rsm
+#' @importFrom rsm decode.data ccd rsm
 #' @import progress
 #' @import parallel
 #' @author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca} Jeff Xia \email{jeff.xia@mcgill.ca}
