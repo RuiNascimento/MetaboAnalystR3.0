@@ -929,11 +929,13 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param methodName Logical, by default set to TRUE
 #'@param compNum GetDefaultPLSCVComp()
 #'@param choice Input the choice, by default it is Q2
+#'@import pls
+#'@importFrom caret train trainControl varImp
+#'@export
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
-#'@import pls
+
 PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1014,11 +1016,13 @@ PLSDA.CV <- function(mSetObj=NA, methodName="T", compNum=GetDefaultPLSCVComp(mSe
 #'@param mSetObj Input name of the created mSet Object
 #'@param num Numeric, input the number of permutations
 #'@param type Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance
+#'@export
+#'@import pls
+#'@importFrom caret plsda
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
-#'@import pls
+
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2194,11 +2198,12 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@export
+#'@importFrom caret plsda train trainControl varImp
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@export
-#'@import caret
+
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);

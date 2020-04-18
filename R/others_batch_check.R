@@ -171,10 +171,10 @@ Read.BatchCSVdata<-function(mSetObj=NA, filePath, format){
 #'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars groups
 #'@import edgeR
 #'@importFrom pcaMethods pca
+#'@importFrom crmn standardsFit
 #'@import impute
 #'@import data.table
 #'@import BiocParallel
-#'@import crmn
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -1045,7 +1045,7 @@ CCMN2<-function(data,class){
   means <- colMeans(lana)
   sds <- apply(lana, 2, sd, na.rm=TRUE)
   
-  sfit <- crmn::standardsFit(object, factors, lg=lg, ncomp=ncomp,standards=standards)
+  sfit <- standardsFit(object, factors, lg=lg, ncomp=ncomp,standards=standards)
   tz <- standardsPred(sfit, object, factors, lg=lg, standards=standards)
   sclana <- scale(lana);fitfunc=lm
   pfit <- fitfunc(sclana~-1+I(tz))
@@ -1457,7 +1457,7 @@ R2 <- function(poi,V,poiType,pval = T) {
       }
     }
   }
-  
+  cr
   for (ipoi in 1:l){
     if (pval){
       pv[ipoi] <- min(pv_tmp[,ipoi])
