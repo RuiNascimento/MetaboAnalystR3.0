@@ -140,6 +140,8 @@ knitr::include_graphics("vignette_figures/Example1_BC Trenddpi300.png",dpi = 480
 
 ## 4. Case 2 - IBD Benchmark Data
 
+This Benchmark data is a large batch data with over 600 samples. The data file size is over 70 MB. This part is designed for repeating our published [results](). Running of this part may take over 30min to finish. You are strongly recommonded to use your own data instead of this large file to avoid the consuming of patience.
+
 #### 4.1 Data Downloading
 
 ```{r, eval=FALSE,echo=T}
@@ -148,8 +150,8 @@ knitr::include_graphics("vignette_figures/Example1_BC Trenddpi300.png",dpi = 480
 library(googledrive);
 temp <- tempfile(fileext = ".csv")
 # Please authorize your google account to access the data
-dl <- drive_download(
-  as_id("10HNuKNwsDwQhCA25LMEDC9ZyoL4gXOsD"), path = temp, overwrite = TRUE)
+dl1 <- drive_download(
+  as_id("1wEh2P81J_xFWJs5y4mq98-FsjxJ5wmBO"), path = temp, overwrite = TRUE)
 
 ```
 
@@ -159,8 +161,8 @@ dl <- drive_download(
 library(googledrive);
 temp <- tempfile(fileext = ".csv")
 # Please authorize your google account to access the data
-dl <- drive_download(
-  as_id("10HNuKNwsDwQhCA25LMEDC9ZyoL4gXOsD"), path = temp, overwrite = TRUE)
+dl2 <- drive_download(
+  as_id("1IOF2pCYrd0sbmFt3x9XOcwYj6XEA2z1n"), path = temp, overwrite = TRUE)
 
 ```
 
@@ -215,7 +217,7 @@ Rserv started in daemon mode.
 ```
 
 ```{r,eval=F}
-mSet<-Read.TextData(mSet, "/home/xialab/Documents/metaboanalyst_input.csv", "col", "disc")
+mSet<-Read.TextData(mSet, dl1$local_path, "col", "disc")
 
 ```
 
@@ -250,7 +252,7 @@ cat('[1] " Further feature filtering based on Interquantile Range Reduced to 500
 normalized_set <- mSet[["dataSet"]][["norm"]]
 ordered_normalized_set <- normalized_set[ order(row.names(normalized_set)), ]
 ### import metadata
-meta_data <- read.csv("/home/xialab/Documents/meta_data.csv")
+meta_data <- read.csv(dl2$local_path)
 new_normalized_set <- cbind(meta_data[,2:4], ordered_normalized_set);
 write.csv(new_normalized_set,file = "new_normalized_set.csv")
 ```
@@ -260,7 +262,7 @@ write.csv(new_normalized_set,file = "new_normalized_set.csv")
 mSet <- PCA.Anal(mSet)
 mSet <- PlotPCAPairSummary(mSet, "pca_pair_0_", "png", 72, width=NA, 5)
 mSet <- PlotPCAScree(mSet, "pca_scree_0_", "png", 72, width=NA, 5)
-mSet <- PlotPCA2DScore(mSet, "pca_score2d_0_", "png", 72, width=NA, 1,2,0.95,0,0)
+mSet <- PlotPCA2DScore(mSet, "pca_score2d_0_", "png", 72, width=NA,style = 2, 1,2,0.95,0,0)
 ```
 
 ```{r,echo=F}
@@ -333,3 +335,32 @@ knitr::include_graphics("vignette_figures/Example2_image_BC Trenddpi300.png",dpi
 
 
 #### 4.7 Data visualization - PCA plotting with groups
+
+```{r, eval=F}
+## remove the batch column in the corrected result
+data_corrected <- read.csv("/home/xialab/Documents/MetaboAnalyst_batch_data.csv")
+data_corrected_new <- data_corrected[,-3]
+write.csv(data_corrected_new,file = "MetaboAnalyst_batch_data_stats.csv",row.names =  F)
+```
+
+```{r,eval=F}
+mSet<-InitDataObjects("pktable", "stat", FALSE)
+mSet<-Read.TextData(mSet, "MetaboAnalyst_batch_data_stats.csv", "row", "disc")
+mSet<-SanityCheckData(mSet)
+mSet<-ReplaceMin(mSet);
+mSet<-FilterVariable(mSet, "iqr", "F", 25)
+mSet<-PreparePrenormData(mSet)
+mSet<-Normalization(mSet, "NULL", "NULL", "NULL", ratio=FALSE, ratioNum=20) # No need to normalize again
+mSet <- PCA.Anal(mSet)
+mSet <- PlotPCAPairSummary(mSet, "pca_pair_0_", "png", 72, width=NA, 5)
+mSet <- PlotPCAScree(mSet, "pca_scree_0_", "png", 72, width=NA, 5)
+mSet <- PlotPCA2DScore(mSet, "pca_score2d_0_", "png", 72, width=NA, style = 2, 1,2,0.95,0,0)
+
+```
+
+
+```{r,echo=F}
+knitr::include_graphics("vignette_figures/IBD_BCfree_pca_score2d_0_dpi72.png",dpi = 120)
+```
+
+####### ============ END OF THIS VIGNETTE =============
