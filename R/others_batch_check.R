@@ -1457,6 +1457,7 @@ R2 <- function(poi,V,poiType,pval = T) {
       }
     }
   }
+ 
   for (ipoi in 1:l){
     if (pval){
       pv[ipoi] <- min(pv_tmp[,ipoi])
